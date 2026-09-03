@@ -1,0 +1,140 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  CLIENT
+  ADMIN
+  DEVELOPER
+}
+
+enum AssessmentStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum CommissionStatus {
+  PENDING
+  PAID
+}
+
+enum NoteStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+model User {
+  id        String   @id @default(cuid())
+  clerkId   String   @unique
+  email     String   @unique
+  firstName String?
+  lastName  String?
+  role      UserRole @default(CLIENT)
+
+  assessments Assessment[]
+  payments    Payment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Assessment {
+  id     String @id @default(cuid())
+  userId String
+
+  status    AssessmentStatus @default(NOT_STARTED)
+  answers   Json?
+  progress  Int              @default(0)
+  startedAt DateTime?
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  result Result?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model Result {
+  id           String @id @default(cuid())
+  assessmentId String @unique
+
+  brandDNA Json
+
+  assessment Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Payment {
+  id     String @id @default(cuid())
+  userId String
+
+  stripePaymentId String? @unique
+  amount          Int
+  currency        String        @default("eur")
+  status          PaymentStatus @default(PENDING)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model DeveloperCommission {
+  id String @id @default(cuid())
+
+  developerId String
+  paymentId   String
+  amount      Int
+  status      CommissionStatus @default(PENDING)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([developerId])
+  @@index([paymentId])
+}
+
+model ConsultantNote {
+  id     String @id @default(cuid())
+  userId String
+
+  content String
+  status  NoteStatus @default(ACTIVE)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model AdminLog {
+  id String @id @default(cuid())
+
+  adminId String
+  action  String
+  target  String?
+  details Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([adminId])
+}
