@@ -37,12 +37,12 @@ enum NoteStatus {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  clerkId   String   @unique
-  email     String   @unique
-  firstName String?
-  lastName  String?
-  role      UserRole @default(CLIENT)
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  firstName    String?
+  lastName     String?
+  role         UserRole @default(CLIENT)
 
   assessments Assessment[]
   payments    Payment[]
@@ -55,9 +55,9 @@ model Assessment {
   id     String @id @default(cuid())
   userId String
 
-  status    AssessmentStatus @default(NOT_STARTED)
-  answers   Json?
-  progress  Int              @default(0)
+  status   AssessmentStatus @default(NOT_STARTED)
+  answers  Json?
+  progress Int              @default(0)
   startedAt DateTime?
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)

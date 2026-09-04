@@ -1,6 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { useRouter } from "next/navigation";
 
 import {
@@ -13,7 +17,8 @@ import {
 
 import type { AssessmentDraft } from "@/types/assessment";
 
-const TOTAL_STEPS = ASSESSMENT_QUESTIONS.length;
+const TOTAL_STEPS =
+  ASSESSMENT_QUESTIONS.length;
 
 const INITIAL_DRAFT: AssessmentDraft = {
   step: 0,
@@ -43,7 +48,12 @@ export default function AssessmentFlow() {
   const router = useRouter();
 
   const [draft, setDraft] =
-    useState<AssessmentDraft>(INITIAL_DRAFT);
+    useState<AssessmentDraft>(
+      INITIAL_DRAFT
+    );
+
+  const [isInitializing, setIsInitializing] =
+    useState(true);
 
   const [isSubmitting, setIsSubmitting] =
     useState(false);
@@ -59,6 +69,72 @@ export default function AssessmentFlow() {
       ((draft.step + 1) / TOTAL_STEPS) * 100
     );
   }, [draft.step]);
+
+  /*
+   * Initialize or resume the assessment.
+   */
+  useEffect(() => {
+    async function initializeAssessment() {
+      try {
+        setIsInitializing(true);
+        setError("");
+
+        const response = await fetch(
+          "/api/assessment/start",
+          {
+            method: "POST",
+          }
+        );
+
+        const data =
+          await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data?.error ||
+              "Failed to start assessment."
+          );
+        }
+
+        /*
+         * Resume previously saved answers.
+         */
+        if (
+          data.answers &&
+          typeof data.answers === "object" &&
+          !Array.isArray(data.answers)
+        ) {
+          const answers =
+            data.answers as Partial<AssessmentDraft>;
+
+          setDraft((current) => ({
+            ...current,
+            ...answers,
+            step:
+              typeof data.progress === "number"
+                ? Math.min(
+                    Math.max(data.progress, 0),
+                    TOTAL_STEPS - 1
+                  )
+                : current.step,
+          }));
+        }
+      } catch (error) {
+        console.error(
+          "Assessment initialization error:",
+          error
+        );
+
+        setError(
+          "Unable to start your assessment. Please try again."
+        );
+      } finally {
+        setIsInitializing(false);
+      }
+    }
+
+    initializeAssessment();
+  }, []);
 
   if (!currentQuestion) {
     return null;
@@ -102,7 +178,9 @@ export default function AssessmentFlow() {
   function toggleValue(valueId: string) {
     setDraft((current) => {
       const alreadySelected =
-        current.selectedValues.includes(valueId);
+        current.selectedValues.includes(
+          valueId
+        );
 
       if (alreadySelected) {
         return {
@@ -114,7 +192,9 @@ export default function AssessmentFlow() {
         };
       }
 
-      if (current.selectedValues.length >= 3) {
+      if (
+        current.selectedValues.length >= 3
+      ) {
         return current;
       }
 
@@ -185,7 +265,9 @@ export default function AssessmentFlow() {
   function toggleTone(tone: string) {
     setDraft((current) => {
       const alreadySelected =
-        current.selectedTones.includes(tone);
+        current.selectedTones.includes(
+          tone
+        );
 
       if (alreadySelected) {
         return {
@@ -197,7 +279,9 @@ export default function AssessmentFlow() {
         };
       }
 
-      if (current.selectedTones.length >= 4) {
+      if (
+        current.selectedTones.length >= 4
+      ) {
         return current;
       }
 
@@ -214,10 +298,14 @@ export default function AssessmentFlow() {
   function isCurrentStepValid() {
     switch (currentQuestion.id) {
       case "identity":
-        return draft.personName.trim().length > 0;
+        return (
+          draft.personName.trim().length > 0
+        );
 
       case "values":
-        return draft.selectedValues.length === 3;
+        return (
+          draft.selectedValues.length === 3
+        );
 
       case "archetypes":
         return (
@@ -226,17 +314,25 @@ export default function AssessmentFlow() {
         );
 
       case "purpose":
-        return draft.purpose.trim().length > 0;
+        return (
+          draft.purpose.trim().length > 0
+        );
 
       case "vision":
-        return draft.vision.trim().length > 0;
+        return (
+          draft.vision.trim().length > 0
+        );
 
       case "ikigai":
         return (
-          draft.ikigai.passion.trim().length > 0 &&
-          draft.ikigai.mission.trim().length > 0 &&
-          draft.ikigai.vocation.trim().length > 0 &&
-          draft.ikigai.profession.trim().length > 0
+          draft.ikigai.passion.trim().length >
+            0 &&
+          draft.ikigai.mission.trim().length >
+            0 &&
+          draft.ikigai.vocation.trim().length >
+            0 &&
+          draft.ikigai.profession.trim().length >
+            0
         );
 
       case "perception":
@@ -252,43 +348,13 @@ export default function AssessmentFlow() {
     }
   }
 
-  async function saveAnswer(
-    questionId: string
-  ) {
-    try {
-      await fetch(
-        "/api/assessment/answer",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type":
-              "application/json",
-          },
-          body: JSON.stringify({
-            questionId,
-            answer: getAnswerForQuestion(
-              questionId
-            ),
-            step: draft.step + 1,
-          }),
-        }
-      );
-    } catch (error) {
-      console.error(
-        "Failed to save assessment answer:",
-        error
-      );
-    }
-  }
-
   function getAnswerForQuestion(
     questionId: string
   ) {
     switch (questionId) {
       case "identity":
         return {
-          personName:
-            draft.personName,
+          personName: draft.personName,
         };
 
       case "values":
@@ -322,80 +388,189 @@ export default function AssessmentFlow() {
     }
   }
 
-  async function handleNext() {
-    setError("");
-
-    if (!isCurrentStepValid()) {
-      setError(
-        "Please complete this section before continuing."
-      );
-      return;
-    }
-
-    await saveAnswer(
-      currentQuestion.id
+  /*
+   * Save the current answer.
+   */
+  async function saveAnswer(
+    questionId: string
+  ) {
+    const response = await fetch(
+      "/api/assessment/answer",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type":
+            "application/json",
+        },
+        body: JSON.stringify({
+          questionId,
+          answer:
+            getAnswerForQuestion(
+              questionId
+            ),
+          step: draft.step + 1,
+        }),
+      }
     );
 
-    if (
-      draft.step <
-      TOTAL_STEPS - 1
-    ) {
-      updateDraft({
-        step: draft.step + 1,
-      });
+    const data =
+      await response.json();
 
+    if (!response.ok) {
+      throw new Error(
+        data?.error ||
+          "Failed to save assessment answer."
+      );
+    }
+
+    return data;
+  }
+
+  /*
+   * Complete the assessment.
+   *
+   * This is intentionally handled inside
+   * handleNext() after the final answer has
+   * been successfully saved.
+   */
+  async function completeAssessment() {
+    const response = await fetch(
+      "/api/assessment/complete",
+      {
+        method: "POST",
+      }
+    );
+
+    const data =
+      await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data?.error ||
+          "Failed to complete assessment."
+      );
+    }
+
+    return data;
+  }
+
+  /*
+   * IMPORTANT:
+   *
+   * isSubmitting is locked immediately at
+   * the beginning of this function.
+   *
+   * This prevents:
+   *
+   * - double clicks
+   * - duplicate answer requests
+   * - duplicate completion requests
+   * - an extra request after completion
+   */
+  async function handleNext() {
+    if (
+      isInitializing ||
+      isSubmitting
+    ) {
       return;
     }
 
-    await completeAssessment();
+    setError("");
+
+    /*
+     * Lock navigation BEFORE any async
+     * operation starts.
+     */
+    setIsSubmitting(true);
+
+    try {
+      /*
+       * Validate current question.
+       */
+      if (!isCurrentStepValid()) {
+        setError(
+          "Please complete this section before continuing."
+        );
+
+        return;
+      }
+
+      /*
+       * Save current answer.
+       */
+      await saveAnswer(
+        currentQuestion.id
+      );
+
+      /*
+       * If this isn't the last question,
+       * simply move to the next step.
+       */
+      if (
+        draft.step <
+        TOTAL_STEPS - 1
+      ) {
+        setDraft((current) => ({
+          ...current,
+          step: current.step + 1,
+        }));
+
+        return;
+      }
+
+      /*
+       * Last question:
+       *
+       * The final answer has already been
+       * saved above.
+       *
+       * Now generate Brand DNA.
+       */
+      await completeAssessment();
+
+      /*
+       * Only redirect after successful
+       * backend completion.
+       */
+      router.push("/results");
+    } catch (error) {
+      console.error(
+        "Assessment flow error:",
+        error
+      );
+
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Something went wrong. Please try again."
+      );
+    } finally {
+      /*
+       * Unlock only after the entire operation
+       * has finished.
+       */
+      setIsSubmitting(false);
+    }
   }
 
   function handleBack() {
+    if (
+      isInitializing ||
+      isSubmitting
+    ) {
+      return;
+    }
+
     setError("");
 
     if (draft.step === 0) {
       return;
     }
 
-    updateDraft({
-      step: draft.step - 1,
-    });
-  }
-
-  async function completeAssessment() {
-    try {
-      setIsSubmitting(true);
-
-      const response = await fetch(
-        "/api/assessment/complete",
-        {
-          method: "POST",
-        }
-      );
-
-      const data =
-        await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          data?.error ||
-            "Failed to complete assessment."
-        );
-      }
-
-      router.push("/results");
-    } catch (error) {
-      console.error(
-        "Assessment completion error:",
-        error
-      );
-
-      setError(
-        "Something went wrong while generating your Brand DNA. Please try again."
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
+    setDraft((current) => ({
+      ...current,
+      step: current.step - 1,
+    }));
   }
 
   function renderQuestion() {
@@ -470,7 +645,9 @@ export default function AssessmentFlow() {
                           : "text-black/60"
                       }`}
                     >
-                      {value.description}
+                      {
+                        value.description
+                      }
                     </p>
                   </button>
                 );
@@ -496,7 +673,9 @@ export default function AssessmentFlow() {
 
                     return (
                       <button
-                        key={archetype.id}
+                        key={
+                          archetype.id
+                        }
                         type="button"
                         onClick={() =>
                           selectArchetype(
@@ -510,7 +689,9 @@ export default function AssessmentFlow() {
                         }`}
                       >
                         <h3 className="text-lg font-semibold">
-                          {archetype.title}
+                          {
+                            archetype.title
+                          }
                         </h3>
 
                         <p
@@ -520,7 +701,9 @@ export default function AssessmentFlow() {
                               : "text-black/50"
                           }`}
                         >
-                          {archetype.subtitle}
+                          {
+                            archetype.subtitle
+                          }
                         </p>
 
                         <p
@@ -530,7 +713,9 @@ export default function AssessmentFlow() {
                               : "text-black/60"
                           }`}
                         >
-                          {archetype.description}
+                          {
+                            archetype.description
+                          }
                         </p>
                       </button>
                     );
@@ -557,9 +742,13 @@ export default function AssessmentFlow() {
 
                     return (
                       <button
-                        key={archetype.id}
+                        key={
+                          archetype.id
+                        }
                         type="button"
-                        disabled={disabled}
+                        disabled={
+                          disabled
+                        }
                         onClick={() =>
                           selectSecondaryArchetype(
                             archetype.id
@@ -574,7 +763,9 @@ export default function AssessmentFlow() {
                         }`}
                       >
                         <h3 className="text-lg font-semibold">
-                          {archetype.title}
+                          {
+                            archetype.title
+                          }
                         </h3>
 
                         <p
@@ -584,7 +775,9 @@ export default function AssessmentFlow() {
                               : "text-black/50"
                           }`}
                         >
-                          {archetype.subtitle}
+                          {
+                            archetype.subtitle
+                          }
                         </p>
                       </button>
                     );
@@ -626,10 +819,22 @@ export default function AssessmentFlow() {
           <div className="grid gap-6 md:grid-cols-2">
             {(
               [
-                ["passion", "What you love"],
-                ["mission", "What the world needs"],
-                ["vocation", "What you are good at"],
-                ["profession", "What you can build a career around"],
+                [
+                  "passion",
+                  "What you love",
+                ],
+                [
+                  "mission",
+                  "What the world needs",
+                ],
+                [
+                  "vocation",
+                  "What you are good at",
+                ],
+                [
+                  "profession",
+                  "What you can build a career around",
+                ],
               ] as const
             ).map(
               ([key, label]) => (
@@ -666,8 +871,8 @@ export default function AssessmentFlow() {
 
               <textarea
                 value={
-                  draft.ikigai.intersection ??
-                  ""
+                  draft.ikigai
+                    .intersection ?? ""
                 }
                 onChange={(event) =>
                   updateIkigai(
@@ -695,14 +900,22 @@ export default function AssessmentFlow() {
                   draft.perception[key];
 
                 return (
-                  <div key={dimension.id}>
+                  <div
+                    key={
+                      dimension.id
+                    }
+                  >
                     <div className="mb-4 flex justify-between gap-4 text-sm">
                       <span>
-                        {dimension.leftLabel}
+                        {
+                          dimension.leftLabel
+                        }
                       </span>
 
                       <span>
-                        {dimension.rightLabel}
+                        {
+                          dimension.rightLabel
+                        }
                       </span>
                     </div>
 
@@ -858,7 +1071,11 @@ export default function AssessmentFlow() {
             <button
               type="button"
               onClick={handleBack}
-              disabled={draft.step === 0}
+              disabled={
+                draft.step === 0 ||
+                isInitializing ||
+                isSubmitting
+              }
               className="text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-20"
             >
               ← Back
@@ -867,15 +1084,23 @@ export default function AssessmentFlow() {
             <button
               type="button"
               onClick={handleNext}
-              disabled={isSubmitting}
+              disabled={
+                isInitializing ||
+                isSubmitting
+              }
               className="bg-[#171519] px-8 py-4 text-sm font-medium text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {isSubmitting
-                ? "Generating..."
-                : draft.step ===
+              {isInitializing
+                ? "Preparing..."
+                : isSubmitting
+                  ? draft.step ===
                     TOTAL_STEPS - 1
-                  ? "Generate My Brand DNA"
-                  : "Continue →"}
+                    ? "Generating..."
+                    : "Saving..."
+                  : draft.step ===
+                      TOTAL_STEPS - 1
+                    ? "Generate My Brand DNA"
+                    : "Continue →"}
             </button>
           </div>
         </section>

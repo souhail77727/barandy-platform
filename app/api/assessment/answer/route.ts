@@ -1,43 +1,53 @@
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
-import { Prisma } from "@/generated/prisma/client";
+import { auth } from "@/auth";
 
 import { prisma } from "@/lib/prisma";
-import { calculateBrandDNAFromAssessment } from "@/lib/brand-engine/calculate-brand-dna";
+import { Prisma } from "@/generated/prisma/client";
 
-export async function POST() {
+export async function POST(request: Request) {
   try {
-    // Authenticate the request through Clerk
-    const authResult = await auth({
-      acceptsToken: "session_token",
-    });
+    const session = await auth();
 
-    console.log("CLERK DEBUG:", {
-      isAuthenticated: authResult.isAuthenticated,
-      userId: authResult.userId,
-      sessionId: authResult.sessionId,
-      tokenType: authResult.tokenType,
-    });
-
-    if (!authResult.isAuthenticated || !authResult.userId) {
+    if (!session?.user?.id) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
       );
     }
 
-    const userId = authResult.userId;
+    const body = await request.json();
 
-    // Find the user's active assessment
-    const assessment = await prisma.assessment.findFirst({
-      where: {
-        userId,
-        status: "IN_PROGRESS",
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+    const questionId =
+      typeof body.questionId === "string"
+        ? body.questionId
+        : "";
+
+    const answer = body.answer;
+
+    const step =
+      typeof body.step === "number"
+        ? body.step
+        : 0;
+
+    if (!questionId) {
+      return NextResponse.json(
+        { error: "Question ID is required" },
+        { status: 400 }
+      );
+    }
+
+    const userId = session.user.id;
+
+    const assessment =
+      await prisma.assessment.findFirst({
+        where: {
+          userId,
+          status: "IN_PROGRESS",
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
 
     if (!assessment) {
       return NextResponse.json(
@@ -46,140 +56,161 @@ export async function POST() {
       );
     }
 
-    // Validate answers
-    if (
-      !assessment.answers ||
-      typeof assessment.answers !== "object" ||
-      Array.isArray(assessment.answers)
-    ) {
-      return NextResponse.json(
-        { error: "Assessment answers are incomplete" },
-        { status: 400 }
-      );
+    const existingAnswers =
+      assessment.answers &&
+      typeof assessment.answers === "object" &&
+      !Array.isArray(assessment.answers)
+        ? (assessment.answers as Record<
+            string,
+            unknown
+          >)
+        : {};
+
+    let updatedAnswers: Record<
+      string,
+      unknown
+    > = {
+      ...existingAnswers,
+    };
+
+    switch (questionId) {
+      case "identity":
+        if (
+          typeof answer === "object" &&
+          answer !== null &&
+          !Array.isArray(answer)
+        ) {
+          const identity =
+            answer as {
+              personName?: unknown;
+            };
+
+          updatedAnswers.personName =
+            typeof identity.personName === "string"
+              ? identity.personName
+              : "";
+        }
+        break;
+
+      case "values":
+        if (Array.isArray(answer)) {
+          updatedAnswers.selectedValues =
+            answer.filter(
+              (value): value is string =>
+                typeof value === "string"
+            );
+        }
+        break;
+
+      case "archetypes":
+        if (
+          typeof answer === "object" &&
+          answer !== null &&
+          !Array.isArray(answer)
+        ) {
+          const archetypes =
+            answer as {
+              primaryArchetypeId?: unknown;
+              secondaryArchetypeId?: unknown;
+            };
+
+          updatedAnswers.primaryArchetypeId =
+            typeof archetypes.primaryArchetypeId ===
+            "string"
+              ? archetypes.primaryArchetypeId
+              : "";
+
+          updatedAnswers.secondaryArchetypeId =
+            typeof archetypes.secondaryArchetypeId ===
+            "string"
+              ? archetypes.secondaryArchetypeId
+              : "";
+        }
+        break;
+
+      case "purpose":
+        updatedAnswers.purpose =
+          typeof answer === "string"
+            ? answer
+            : "";
+        break;
+
+      case "vision":
+        updatedAnswers.vision =
+          typeof answer === "string"
+            ? answer
+            : "";
+        break;
+
+      case "ikigai":
+        if (
+          typeof answer === "object" &&
+          answer !== null &&
+          !Array.isArray(answer)
+        ) {
+          updatedAnswers.ikigai = answer;
+        }
+        break;
+
+      case "perception":
+        if (
+          typeof answer === "object" &&
+          answer !== null &&
+          !Array.isArray(answer)
+        ) {
+          updatedAnswers.perception = answer;
+        }
+        break;
+
+      case "voice":
+        if (Array.isArray(answer)) {
+          updatedAnswers.selectedTones =
+            answer.filter(
+              (value): value is string =>
+                typeof value === "string"
+            );
+        }
+        break;
+
+      default:
+        return NextResponse.json(
+          { error: "Unknown question ID" },
+          { status: 400 }
+        );
     }
 
-    const answers = assessment.answers as Record<string, unknown>;
+    const updatedAssessment =
+      await prisma.assessment.update({
+        where: {
+          id: assessment.id,
+        },
 
-    // Calculate Brand DNA
-    const brandDNA = calculateBrandDNAFromAssessment({
-      step: assessment.progress,
+        data: {
+          answers:
+            updatedAnswers as Prisma.InputJsonValue,
 
-      selectedValues:
-        Array.isArray(answers.selectedValues)
-          ? answers.selectedValues.filter(
-              (value): value is string =>
-                typeof value === "string"
-            )
-          : [],
-
-      primaryArchetypeId:
-        typeof answers.primaryArchetypeId === "string"
-          ? answers.primaryArchetypeId
-          : "sage",
-
-      secondaryArchetypeId:
-        typeof answers.secondaryArchetypeId === "string"
-          ? answers.secondaryArchetypeId
-          : "creator",
-
-      personName:
-        typeof answers.personName === "string"
-          ? answers.personName
-          : "",
-
-      purpose:
-        typeof answers.purpose === "string"
-          ? answers.purpose
-          : "",
-
-      vision:
-        typeof answers.vision === "string"
-          ? answers.vision
-          : "",
-
-      perception:
-        answers.perception &&
-        typeof answers.perception === "object"
-          ? (answers.perception as {
-              authorityVsAccessibility: number;
-              innovationVsTradition: number;
-              provocativeVsReassuring: number;
-              specialistVsPolymath: number;
-            })
-          : {
-              authorityVsAccessibility: 50,
-              innovationVsTradition: 50,
-              provocativeVsReassuring: 50,
-              specialistVsPolymath: 50,
-            },
-
-      ikigai:
-        answers.ikigai &&
-        typeof answers.ikigai === "object"
-          ? (answers.ikigai as {
-              passion: string;
-              mission: string;
-              vocation: string;
-              profession: string;
-              intersection?: string;
-            })
-          : {
-              passion: "",
-              mission: "",
-              vocation: "",
-              profession: "",
-            },
-
-      selectedTones:
-        Array.isArray(answers.selectedTones)
-          ? answers.selectedTones.filter(
-              (value): value is string =>
-                typeof value === "string"
-            )
-          : [],
-    });
-
-    // Create or update the result
-    const result = await prisma.result.upsert({
-      where: {
-        assessmentId: assessment.id,
-      },
-
-      update: {
-        brandDNA:
-          brandDNA as unknown as Prisma.InputJsonValue,
-      },
-
-      create: {
-        assessmentId: assessment.id,
-        brandDNA:
-          brandDNA as unknown as Prisma.InputJsonValue,
-      },
-    });
-
-    // Mark assessment as completed
-    await prisma.assessment.update({
-      where: {
-        id: assessment.id,
-      },
-
-      data: {
-        status: "COMPLETED",
-        progress: 100,
-      },
-    });
+          progress: Math.min(
+            Math.max(step, 0),
+            100
+          ),
+        },
+      });
 
     return NextResponse.json({
       success: true,
-      resultId: result.id,
-      brandDNA,
+      assessmentId: updatedAssessment.id,
+      questionId,
+      progress: updatedAssessment.progress,
     });
   } catch (error) {
-    console.error("Assessment completion error:", error);
+    console.error(
+      "Assessment answer error:",
+      error
+    );
 
     return NextResponse.json(
       {
-        error: "Failed to complete assessment",
+        error: "Failed to save assessment answer",
       },
       {
         status: 500,
