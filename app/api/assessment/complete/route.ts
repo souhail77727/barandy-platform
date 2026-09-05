@@ -50,43 +50,28 @@ export async function POST() {
 
     const brandDNA = calculateBrandDNAFromAssessment({
       step: assessment.progress,
-
       selectedValues:
         Array.isArray(answers.selectedValues)
           ? answers.selectedValues.filter(
-              (value): value is string =>
-                typeof value === "string"
+              (value): value is string => typeof value === "string"
             )
           : [],
-
       primaryArchetypeId:
         typeof answers.primaryArchetypeId === "string"
           ? answers.primaryArchetypeId
           : "sage",
-
       secondaryArchetypeId:
         typeof answers.secondaryArchetypeId === "string"
           ? answers.secondaryArchetypeId
           : "creator",
-
       personName:
-        typeof answers.personName === "string"
-          ? answers.personName
-          : "",
-
+        typeof answers.personName === "string" ? answers.personName : "",
       purpose:
-        typeof answers.purpose === "string"
-          ? answers.purpose
-          : "",
-
+        typeof answers.purpose === "string" ? answers.purpose : "",
       vision:
-        typeof answers.vision === "string"
-          ? answers.vision
-          : "",
-
+        typeof answers.vision === "string" ? answers.vision : "",
       perception:
-        answers.perception &&
-        typeof answers.perception === "object"
+        answers.perception && typeof answers.perception === "object"
           ? (answers.perception as {
               authorityVsAccessibility: number;
               innovationVsTradition: number;
@@ -99,10 +84,8 @@ export async function POST() {
               provocativeVsReassuring: 50,
               specialistVsPolymath: 50,
             },
-
       ikigai:
-        answers.ikigai &&
-        typeof answers.ikigai === "object"
+        answers.ikigai && typeof answers.ikigai === "object"
           ? (answers.ikigai as {
               passion: string;
               mission: string;
@@ -116,12 +99,10 @@ export async function POST() {
               vocation: "",
               profession: "",
             },
-
       selectedTones:
         Array.isArray(answers.selectedTones)
           ? answers.selectedTones.filter(
-              (value): value is string =>
-                typeof value === "string"
+              (value): value is string => typeof value === "string"
             )
           : [],
     });
@@ -130,16 +111,12 @@ export async function POST() {
       where: {
         assessmentId: assessment.id,
       },
-
       update: {
-        brandDNA:
-          brandDNA as unknown as Prisma.InputJsonValue,
+        brandDNA: brandDNA as unknown as Prisma.InputJsonValue,
       },
-
       create: {
         assessmentId: assessment.id,
-        brandDNA:
-          brandDNA as unknown as Prisma.InputJsonValue,
+        brandDNA: brandDNA as unknown as Prisma.InputJsonValue,
       },
     });
 
@@ -147,12 +124,30 @@ export async function POST() {
       where: {
         id: assessment.id,
       },
-
       data: {
         status: "COMPLETED",
         progress: 100,
       },
     });
+
+    // Manual payment flow: create one pending payment record for this user.
+    const existingPendingPayment = await prisma.payment.findFirst({
+      where: {
+        userId,
+        status: "PENDING",
+      },
+    });
+
+    if (!existingPendingPayment) {
+      await prisma.payment.create({
+        data: {
+          userId,
+          amount: 100,
+          currency: "tnd",
+          status: "PENDING",
+        },
+      });
+    }
 
     return NextResponse.json({
       success: true,
