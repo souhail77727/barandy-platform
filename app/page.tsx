@@ -1,22 +1,35 @@
 import Link from "next/link";
 import { auth } from "@/auth";
-import { ArrowRight, ShieldCheck, Palette, Compass } from "lucide-react";
+import {
+  ArrowRight,
+  ShieldCheck,
+  Palette,
+  Compass,
+} from "lucide-react";
+
+export const dynamic = "force-dynamic";
 
 export default async function Home() {
   const session = await auth();
+
   const isSignedIn = !!session?.user?.id;
-  const userName = session?.user?.name?.split(" ")[0] || "Client";
+  const userName =
+    session?.user?.name?.split(" ")[0] || "Client";
 
   return (
     <div className="min-h-screen bg-[#F8F5F1] text-[#171519] selection:bg-[#D9B896] selection:text-[#171519]">
-      {/* Header */}
-      <header className="flex justify-between items-center py-6 px-8 border-b border-[#171519]/10 bg-[#F8F5F1]/80 backdrop-blur-sm">
+
+      {/* ========================================================= */}
+      {/* HEADER */}
+      {/* ========================================================= */}
+
+      <header className="flex items-center justify-between border-b border-[#171519]/10 bg-[#F8F5F1]/80 px-8 py-6 backdrop-blur-sm">
         <div className="flex items-center gap-3">
-          <h1 className="font-primary font-bold text-2xl tracking-[0.25em] text-[#171519]">
+          <h1 className="font-primary text-2xl font-bold tracking-[0.25em] text-[#171519]">
             BARANDY
           </h1>
 
-          <span className="text-[9px] uppercase tracking-widest font-mono bg-[#171519] text-[#F8F5F1] px-2 py-0.5 hidden sm:inline-block">
+          <span className="hidden bg-[#171519] px-2 py-0.5 font-mono text-[9px] uppercase tracking-widest text-[#F8F5F1] sm:inline-block">
             BRAND DNA™
           </span>
         </div>
@@ -29,24 +42,24 @@ export default async function Home() {
               </span>
 
               <Link
-                href="/assessment"
-                className="text-xs uppercase tracking-widest font-semibold bg-[#171519] text-[#F8F5F1] hover:bg-opacity-90 transition-colors px-3.5 py-1.5 shadow-sm"
+                href="/dashboard"
+                className="bg-[#171519] px-3.5 py-1.5 text-xs font-semibold uppercase tracking-widest text-[#F8F5F1] shadow-sm transition-colors hover:bg-opacity-90"
               >
-                Continue Assessment
+                My Dashboard
               </Link>
             </>
           ) : (
             <>
               <Link
                 href="/sign-in"
-                className="text-xs uppercase tracking-widest font-semibold text-[#171519]/70 hover:text-[#171519] transition-colors px-3 py-1.5"
+                className="px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-[#171519]/70 transition-colors hover:text-[#171519]"
               >
                 Sign In
               </Link>
 
               <Link
                 href="/sign-up"
-                className="text-xs uppercase tracking-widest font-semibold bg-[#171519] text-[#F8F5F1] hover:bg-opacity-90 transition-colors px-3.5 py-1.5 shadow-sm"
+                className="bg-[#171519] px-3.5 py-1.5 text-xs font-semibold uppercase tracking-widest text-[#F8F5F1] shadow-sm transition-colors hover:bg-opacity-90"
               >
                 Create Account
               </Link>
@@ -55,65 +68,82 @@ export default async function Home() {
         </div>
       </header>
 
-      {/* Hero Section */}
-      <main className="flex flex-col items-center justify-center px-6 py-16 md:py-24 text-center max-w-5xl mx-auto">
-        <div className="flex flex-col items-center gap-8 w-full">
+      {/* ========================================================= */}
+      {/* HERO */}
+      {/* ========================================================= */}
+
+      <main className="mx-auto flex max-w-5xl flex-col items-center justify-center px-6 py-16 text-center md:py-24">
+        <div className="flex w-full flex-col items-center gap-8">
+
           {/* Logo */}
-          <div className="w-20 h-20 bg-[#171519] flex items-center justify-center">
-            <span className="text-[#D9B896] font-primary font-bold text-3xl tracking-wider">
+
+          <div className="flex h-20 w-20 items-center justify-center bg-[#171519]">
+            <span className="font-primary text-3xl font-bold tracking-wider text-[#D9B896]">
               B
             </span>
           </div>
 
           {/* Headline */}
-          <div className="flex flex-col gap-4 max-w-3xl mx-auto">
-            <span className="text-xs uppercase tracking-[0.3em] font-semibold text-[#D9B896] font-mono">
+
+          <div className="mx-auto flex max-w-3xl flex-col gap-4">
+            <span className="font-mono text-xs font-semibold uppercase tracking-[0.3em] text-[#D9B896]">
               The Architecture of Influence & Personal Authority
             </span>
 
-            <h1 className="font-primary font-bold text-4xl sm:text-5xl md:text-6xl text-[#171519] tracking-tight leading-[1.12]">
+            <h1 className="font-primary text-4xl font-bold leading-[1.12] tracking-tight text-[#171519] sm:text-5xl md:text-6xl">
               Discover the DNA behind your personal brand.
             </h1>
 
-            <p className="text-lg md:text-xl text-[#171519]/70 max-w-2xl mx-auto font-normal leading-relaxed mt-2">
-              A comprehensive diagnostic platform for visionary founders,
-              executives, and leaders to establish uncontested positioning,
-              archetypal resonance, and signature color intelligence.
+            <p className="mx-auto mt-2 max-w-2xl text-lg font-normal leading-relaxed text-[#171519]/70 md:text-xl">
+              A comprehensive diagnostic platform for visionary
+              founders, executives, and leaders to establish
+              uncontested positioning, archetypal resonance,
+              and signature color intelligence.
             </p>
           </div>
 
-          {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row items-center gap-4 mt-2 w-full justify-center max-w-md">
+          {/* ===================================================== */}
+          {/* CTA BUTTONS */}
+          {/* ===================================================== */}
+
+          <div className="mt-2 flex w-full max-w-md flex-col items-center justify-center gap-4 sm:flex-row">
+
             <Link
-              href={isSignedIn ? "/assessment" : "/sign-up"}
-              className="group relative flex items-center justify-center h-14 px-8 bg-[#171519] hover:bg-opacity-90 text-[#F8F5F1] transition-all duration-300 w-full sm:w-auto shadow-md hover:shadow-lg"
+              href={
+                isSignedIn
+                  ? "/dashboard"
+                  : "/sign-up"
+              }
+              className="group relative flex h-14 w-full items-center justify-center bg-[#171519] px-8 text-[#F8F5F1] shadow-md transition-all duration-300 hover:bg-opacity-90 hover:shadow-lg sm:w-auto"
             >
-              <span className="text-sm font-medium uppercase tracking-[0.15em] relative z-10 flex items-center gap-3">
+              <span className="relative z-10 flex items-center gap-3 text-sm font-medium uppercase tracking-[0.15em]">
                 {isSignedIn
-                  ? "Continue Assessment"
+                  ? "Open My Dashboard"
                   : "Begin Diagnostic Assessment"}
 
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" />
+                <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
               </span>
             </Link>
 
-            <Link
-              href="/dashboard"
-              className="h-14 px-6 bg-[#EEE4DA] hover:bg-[#D9B896]/30 text-[#171519] border border-[#171519]/10 text-xs font-semibold uppercase tracking-wider transition-colors w-full sm:w-auto flex items-center justify-center"
-            >
+            <div className="flex h-14 w-full items-center justify-center border border-[#171519]/10 bg-[#EEE4DA] px-6 text-xs font-semibold uppercase tracking-wider text-[#171519] sm:w-auto">
               Explore Sample Dossier
-            </Link>
+            </div>
           </div>
 
-          {/* Steps Roadmap */}
-          <div className="w-full max-w-4xl mt-12 pt-10 border-t border-[#171519]/10">
-            <div className="text-center mb-6">
-              <span className="text-[11px] font-mono uppercase tracking-[0.25em] text-[#D9B896] font-semibold">
+          {/* ========================================================= */}
+          {/* STEPS ROADMAP */}
+          {/* ========================================================= */}
+
+          <div className="mt-12 w-full max-w-4xl border-t border-[#171519]/10 pt-10">
+
+            <div className="mb-6 text-center">
+              <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.25em] text-[#D9B896]">
                 BARANDY DIAGNOSTIC METHODOLOGY & CLIENT JOURNEY
               </span>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2 text-center text-xs">
+            <div className="grid grid-cols-2 gap-2 text-center text-xs sm:grid-cols-4 md:grid-cols-7">
+
               {[
                 {
                   step: "01",
@@ -153,13 +183,13 @@ export default async function Home() {
               ].map((item) => (
                 <div
                   key={item.step}
-                  className="p-3 bg-white border border-[#171519]/10 flex flex-col justify-between shadow-sm"
+                  className="flex flex-col justify-between border border-[#171519]/10 bg-white p-3 shadow-sm"
                 >
-                  <span className="font-mono text-[10px] text-[#D9B896] font-bold">
+                  <span className="font-mono text-[10px] font-bold text-[#D9B896]">
                     {item.step}
                   </span>
 
-                  <div className="font-bold text-[11px] text-[#171519] my-1">
+                  <div className="my-1 text-[11px] font-bold text-[#171519]">
                     {item.title}
                   </div>
 
@@ -171,60 +201,77 @@ export default async function Home() {
             </div>
           </div>
 
-          {/* Features */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-4xl mt-6 text-left">
-            <div className="p-6 bg-white border border-[#171519]/10 shadow-sm">
-              <div className="w-8 h-8 bg-[#F8F5F1] border border-[#D9B896] flex items-center justify-center mb-3">
-                <Compass className="w-4 h-4 text-[#D9B896]" />
+          {/* ========================================================= */}
+          {/* FEATURES */}
+          {/* ========================================================= */}
+
+          <div className="mt-6 grid w-full max-w-4xl grid-cols-1 gap-6 text-left md:grid-cols-3">
+
+            {/* Feature 1 */}
+
+            <div className="border border-[#171519]/10 bg-white p-6 shadow-sm">
+              <div className="mb-3 flex h-8 w-8 items-center justify-center border border-[#D9B896] bg-[#F8F5F1]">
+                <Compass className="h-4 w-4 text-[#D9B896]" />
               </div>
 
-              <h3 className="font-primary font-bold text-sm text-[#171519]">
+              <h3 className="font-primary text-sm font-bold text-[#171519]">
                 100% Deterministic Engine
               </h3>
 
-              <p className="text-xs text-[#171519]/70 mt-2 leading-relaxed">
-                Calculates your Brand DNA, archetype dominance, and perception
-                balance locally with rigorous mathematical precision.
+              <p className="mt-2 text-xs leading-relaxed text-[#171519]/70">
+                Calculates your Brand DNA, archetype dominance,
+                and perception balance locally with rigorous
+                mathematical precision.
               </p>
             </div>
 
-            <div className="p-6 bg-white border border-[#171519]/10 shadow-sm">
-              <div className="w-8 h-8 bg-[#F8F5F1] border border-[#D9B896] flex items-center justify-center mb-3">
-                <Palette className="w-4 h-4 text-[#D9B896]" />
+            {/* Feature 2 */}
+
+            <div className="border border-[#171519]/10 bg-white p-6 shadow-sm">
+              <div className="mb-3 flex h-8 w-8 items-center justify-center border border-[#D9B896] bg-[#F8F5F1]">
+                <Palette className="h-4 w-4 text-[#D9B896]" />
               </div>
 
-              <h3 className="font-primary font-bold text-sm text-[#171519]">
+              <h3 className="font-primary text-sm font-bold text-[#171519]">
                 Value-to-Color Intelligence
               </h3>
 
-              <p className="text-xs text-[#171519]/70 mt-2 leading-relaxed">
-                Generates a bespoke 5-color palette derived from your top core
-                values under the 60-30-10 editorial rule.
+              <p className="mt-2 text-xs leading-relaxed text-[#171519]/70">
+                Generates a bespoke 5-color palette derived
+                from your top core values under the 60-30-10
+                editorial rule.
               </p>
             </div>
 
-            <div className="p-6 bg-white border border-[#171519]/10 shadow-sm">
-              <div className="w-8 h-8 bg-[#F8F5F1] border border-[#D9B896] flex items-center justify-center mb-3">
-                <ShieldCheck className="w-4 h-4 text-[#D9B896]" />
+            {/* Feature 3 */}
+
+            <div className="border border-[#171519]/10 bg-white p-6 shadow-sm">
+              <div className="mb-3 flex h-8 w-8 items-center justify-center border border-[#D9B896] bg-[#F8F5F1]">
+                <ShieldCheck className="h-4 w-4 text-[#D9B896]" />
               </div>
 
-              <h3 className="font-primary font-bold text-sm text-[#171519]">
+              <h3 className="font-primary text-sm font-bold text-[#171519]">
                 Confidential Client CRM
               </h3>
 
-              <p className="text-xs text-[#171519]/70 mt-2 leading-relaxed">
-                Persistent client accounts, unique BARANDY Client IDs, private
-                consultant notes, and Google Sheets synchronization.
+              <p className="mt-2 text-xs leading-relaxed text-[#171519]/70">
+                Persistent client accounts, unique BARANDY
+                Client IDs, private consultant notes, and
+                secure database management.
               </p>
             </div>
+
           </div>
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="text-center text-xs text-[#171519]/50 py-6 border-t border-[#171519]/10">
-        BARANDY Strategic Personal Brand Architecture • Confidential Client
-        Management
+      {/* ========================================================= */}
+      {/* FOOTER */}
+      {/* ========================================================= */}
+
+      <footer className="border-t border-[#171519]/10 py-6 text-center text-xs text-[#171519]/50">
+        BARANDY Strategic Personal Brand Architecture •
+        Confidential Client Management
       </footer>
     </div>
   );

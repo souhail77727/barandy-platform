@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -6,6 +7,8 @@ import {
   useState,
 } from "react";
 import { useRouter } from "next/navigation";
+
+import ClientHeader from "@/components/layout/ClientHeader";
 
 import {
   ARCHETYPE_OPTIONS,
@@ -17,8 +20,7 @@ import {
 
 import type { AssessmentDraft } from "@/types/assessment";
 
-const TOTAL_STEPS =
-  ASSESSMENT_QUESTIONS.length;
+const TOTAL_STEPS = ASSESSMENT_QUESTIONS.length;
 
 const INITIAL_DRAFT: AssessmentDraft = {
   step: 0,
@@ -48,9 +50,7 @@ export default function AssessmentFlow() {
   const router = useRouter();
 
   const [draft, setDraft] =
-    useState<AssessmentDraft>(
-      INITIAL_DRAFT
-    );
+    useState<AssessmentDraft>(INITIAL_DRAFT);
 
   const [isInitializing, setIsInitializing] =
     useState(true);
@@ -58,18 +58,34 @@ export default function AssessmentFlow() {
   const [isSubmitting, setIsSubmitting] =
     useState(false);
 
-  const [error, setError] =
-    useState("");
+  const [error, setError] = useState("");
 
   const [accessPending, setAccessPending] =
+    useState(false);
+
+  /*
+   * Review mode is activated when the assessment
+   * has already been completed.
+   *
+   * In review mode:
+   * - answers are displayed
+   * - answers cannot be edited
+   * - no answer is saved again
+   * - assessment cannot be regenerated
+   */
+  const [isReviewMode, setIsReviewMode] =
     useState(false);
 
   const currentQuestion =
     ASSESSMENT_QUESTIONS[draft.step];
 
   const progress = useMemo(() => {
+    if (TOTAL_STEPS <= 1) {
+      return 100;
+    }
+
     return Math.round(
-      ((draft.step + 1) / TOTAL_STEPS) * 100
+      (draft.step / (TOTAL_STEPS - 1)) * 100
     );
   }, [draft.step]);
 
@@ -82,6 +98,7 @@ export default function AssessmentFlow() {
         setIsInitializing(true);
         setError("");
         setAccessPending(false);
+        setIsReviewMode(false);
 
         const response = await fetch(
           "/api/assessment/start",
@@ -90,12 +107,11 @@ export default function AssessmentFlow() {
           }
         );
 
-        const data =
-          await response.json();
+        const data = await response.json();
 
         /*
-         * The user is authenticated but
-         * has not been manually approved yet.
+         * Authenticated user whose access
+         * has not been approved yet.
          */
         if (
           response.status === 403 &&
@@ -110,6 +126,52 @@ export default function AssessmentFlow() {
             data?.error ||
               "Failed to start assessment."
           );
+        }
+
+        /*
+         * IMPORTANT:
+         *
+         * A completed assessment should NOT redirect
+         * to /results automatically.
+         *
+         * Instead, load the saved answers and open
+         * the assessment in review mode.
+         */
+        if (data.status === "COMPLETED") {
+          setIsReviewMode(true);
+
+          if (
+            data.answers &&
+            typeof data.answers === "object" &&
+            !Array.isArray(data.answers)
+          ) {
+            const answers =
+              data.answers as Partial<AssessmentDraft>;
+
+            setDraft((current) => ({
+              ...current,
+              ...answers,
+              step:
+                typeof data.progress === "number"
+                  ? Math.min(
+                      Math.max(data.progress - 1, 0),
+                      TOTAL_STEPS - 1
+                    )
+                  : TOTAL_STEPS - 1,
+            }));
+          } else {
+            /*
+             * If the API doesn't return progress for
+             * a completed assessment, start the review
+             * at the final section.
+             */
+            setDraft((current) => ({
+              ...current,
+              step: TOTAL_STEPS - 1,
+            }));
+          }
+
+          return;
         }
 
         /*
@@ -129,7 +191,7 @@ export default function AssessmentFlow() {
             step:
               typeof data.progress === "number"
                 ? Math.min(
-                    Math.max(data.progress, 0),
+                    Math.max(data.progress - 1, 0),
                     TOTAL_STEPS - 1
                   )
                 : current.step,
@@ -153,86 +215,140 @@ export default function AssessmentFlow() {
   }, []);
 
   /*
+   * Loading state.
+   */
+  if (isInitializing) {
+    return (
+      <main className="min-h-screen bg-[#F8F5F1] text-[#171519]">
+        <ClientHeader
+          currentPage="assessment"
+          showBack
+        />
+
+        <div className="flex min-h-[70vh] items-center justify-center px-6">
+          <div className="w-full max-w-md text-center">
+            <p className="text-xs font-medium uppercase tracking-[0.25em] text-black/40">
+              Assessment
+            </p>
+
+            <h1 className="mt-5 text-3xl font-semibold tracking-tight">
+              Preparing your assessment
+            </h1>
+
+            <p className="mt-4 text-sm leading-6 text-black/50">
+              Your workspace is being prepared. This
+              will only take a moment.
+            </p>
+
+            <div className="mx-auto mt-8 h-px w-32 overflow-hidden bg-black/10">
+              <div className="h-full w-1/2 animate-pulse bg-[#171519]" />
+            </div>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  /*
    * Access pending state.
    *
    * The client is authenticated but has not
-   * been manually approved after payment.
+   * been manually approved yet.
    */
   if (accessPending) {
     return (
       <main className="min-h-screen bg-[#F8F5F1] text-[#171519]">
-        <div className="mx-auto flex min-h-screen max-w-4xl items-center justify-center px-6 py-16">
-          <div className="w-full max-w-2xl text-center">
-            <p className="text-sm font-semibold tracking-[0.25em]">
-              BARANDY
-            </p>
+        <ClientHeader
+          currentPage="assessment"
+          showBack
+        />
 
-            <p className="mt-3 text-xs uppercase tracking-[0.2em] text-black/40">
-              Personal Brand Intelligence
-            </p>
-
-            <div className="mt-16">
-              <p className="mb-6 text-xs font-medium uppercase tracking-[0.25em] text-black/40">
+        <div className="mx-auto flex min-h-[75vh] max-w-5xl items-center justify-center px-6 py-16">
+          <div className="w-full max-w-2xl">
+            <div className="text-center">
+              <p className="text-xs font-medium uppercase tracking-[0.25em] text-black/40">
                 Access pending
               </p>
 
-              <h1 className="text-4xl font-semibold leading-tight tracking-tight md:text-6xl">
+              <h1 className="mt-6 text-4xl font-semibold leading-tight tracking-tight md:text-6xl">
                 Your assessment is waiting for you.
               </h1>
 
-              <p className="mx-auto mt-8 max-w-xl text-base leading-8 text-black/55 md:text-lg">
+              <p className="mx-auto mt-7 max-w-xl text-base leading-8 text-black/55 md:text-lg">
                 Your account has been created successfully.
                 Once your payment has been verified, your
                 assessment access will be activated.
               </p>
+            </div>
 
-              <div className="mx-auto mt-10 max-w-md border border-black/10 bg-white p-6 text-left">
-                <p className="text-sm font-semibold">
-                  What happens next?
-                </p>
+            <div className="mx-auto mt-12 max-w-lg border border-black/10 bg-white p-7 md:p-8">
+              <p className="text-sm font-semibold">
+                What happens next?
+              </p>
 
-                <div className="mt-5 space-y-4 text-sm leading-6 text-black/60">
-                  <div className="flex gap-4">
-                    <span className="font-medium text-black">
-                      01
-                    </span>
+              <div className="mt-6 space-y-5">
+                <div className="flex gap-5">
+                  <span className="text-xs font-medium tracking-[0.15em] text-black/40">
+                    01
+                  </span>
 
-                    <span>
-                      Complete your payment using the
-                      provided instructions.
-                    </span>
+                  <div>
+                    <p className="text-sm font-medium">
+                      Complete your payment
+                    </p>
+
+                    <p className="mt-1 text-sm leading-6 text-black/50">
+                      Follow the payment instructions available
+                      in your Barandy account.
+                    </p>
                   </div>
+                </div>
 
-                  <div className="flex gap-4">
-                    <span className="font-medium text-black">
-                      02
-                    </span>
+                <div className="flex gap-5">
+                  <span className="text-xs font-medium tracking-[0.15em] text-black/40">
+                    02
+                  </span>
 
-                    <span>
-                      Send your payment receipt to the
-                      Barandy team.
-                    </span>
+                  <div>
+                    <p className="text-sm font-medium">
+                      Send your receipt
+                    </p>
+
+                    <p className="mt-1 text-sm leading-6 text-black/50">
+                      Send your payment receipt to the Barandy
+                      team for verification.
+                    </p>
                   </div>
+                </div>
 
-                  <div className="flex gap-4">
-                    <span className="font-medium text-black">
-                      03
-                    </span>
+                <div className="flex gap-5">
+                  <span className="text-xs font-medium tracking-[0.15em] text-black/40">
+                    03
+                  </span>
 
-                    <span>
-                      Once verified, your assessment will
-                      be unlocked.
-                    </span>
+                  <div>
+                    <p className="text-sm font-medium">
+                      Assessment unlocked
+                    </p>
+
+                    <p className="mt-1 text-sm leading-6 text-black/50">
+                      Once your payment is verified, you can
+                      begin creating your Brand DNA.
+                    </p>
                   </div>
                 </div>
               </div>
+            </div>
 
+            <div className="mt-10 text-center">
               <button
                 type="button"
-                onClick={() => router.push("/")}
-                className="mt-10 border border-black/15 px-7 py-4 text-sm font-medium transition hover:border-black"
+                onClick={() =>
+                  router.push("/payment")
+                }
+                className="bg-[#171519] px-7 py-4 text-sm font-medium text-white transition hover:bg-black/80"
               >
-                ← Back to Barandy
+                View Payment Instructions
               </button>
             </div>
           </div>
@@ -248,6 +364,10 @@ export default function AssessmentFlow() {
   function updateDraft(
     updates: Partial<AssessmentDraft>
   ) {
+    if (isReviewMode) {
+      return;
+    }
+
     setDraft((current) => ({
       ...current,
       ...updates,
@@ -258,6 +378,10 @@ export default function AssessmentFlow() {
     key: keyof AssessmentDraft["perception"],
     value: number
   ) {
+    if (isReviewMode) {
+      return;
+    }
+
     setDraft((current) => ({
       ...current,
       perception: {
@@ -271,6 +395,10 @@ export default function AssessmentFlow() {
     key: keyof AssessmentDraft["ikigai"],
     value: string
   ) {
+    if (isReviewMode) {
+      return;
+    }
+
     setDraft((current) => ({
       ...current,
       ikigai: {
@@ -281,11 +409,13 @@ export default function AssessmentFlow() {
   }
 
   function toggleValue(valueId: string) {
+    if (isReviewMode) {
+      return;
+    }
+
     setDraft((current) => {
       const alreadySelected =
-        current.selectedValues.includes(
-          valueId
-        );
+        current.selectedValues.includes(valueId);
 
       if (alreadySelected) {
         return {
@@ -297,9 +427,7 @@ export default function AssessmentFlow() {
         };
       }
 
-      if (
-        current.selectedValues.length >= 3
-      ) {
+      if (current.selectedValues.length >= 3) {
         return current;
       }
 
@@ -316,6 +444,10 @@ export default function AssessmentFlow() {
   function selectArchetype(
     archetypeId: string
   ) {
+    if (isReviewMode) {
+      return;
+    }
+
     setDraft((current) => {
       if (
         current.primaryArchetypeId ===
@@ -342,6 +474,10 @@ export default function AssessmentFlow() {
   function selectSecondaryArchetype(
     archetypeId: string
   ) {
+    if (isReviewMode) {
+      return;
+    }
+
     setDraft((current) => {
       if (
         current.secondaryArchetypeId ===
@@ -368,11 +504,13 @@ export default function AssessmentFlow() {
   }
 
   function toggleTone(tone: string) {
+    if (isReviewMode) {
+      return;
+    }
+
     setDraft((current) => {
       const alreadySelected =
-        current.selectedTones.includes(
-          tone
-        );
+        current.selectedTones.includes(tone);
 
       if (alreadySelected) {
         return {
@@ -384,9 +522,7 @@ export default function AssessmentFlow() {
         };
       }
 
-      if (
-        current.selectedTones.length >= 4
-      ) {
+      if (current.selectedTones.length >= 4) {
         return current;
       }
 
@@ -430,14 +566,10 @@ export default function AssessmentFlow() {
 
       case "ikigai":
         return (
-          draft.ikigai.passion.trim().length >
-            0 &&
-          draft.ikigai.mission.trim().length >
-            0 &&
-          draft.ikigai.vocation.trim().length >
-            0 &&
-          draft.ikigai.profession.trim().length >
-            0
+          draft.ikigai.passion.trim().length > 0 &&
+          draft.ikigai.mission.trim().length > 0 &&
+          draft.ikigai.vocation.trim().length > 0 &&
+          draft.ikigai.profession.trim().length > 0
         );
 
       case "perception":
@@ -495,6 +627,8 @@ export default function AssessmentFlow() {
 
   /*
    * Save the current answer.
+   *
+   * Disabled completely in review mode.
    */
   async function saveAnswer(
     questionId: string
@@ -504,22 +638,18 @@ export default function AssessmentFlow() {
       {
         method: "POST",
         headers: {
-          "Content-Type":
-            "application/json",
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           questionId,
           answer:
-            getAnswerForQuestion(
-              questionId
-            ),
+            getAnswerForQuestion(questionId),
           step: draft.step + 1,
         }),
       }
     );
 
-    const data =
-      await response.json();
+    const data = await response.json();
 
     if (!response.ok) {
       throw new Error(
@@ -534,9 +664,7 @@ export default function AssessmentFlow() {
   /*
    * Complete the assessment.
    *
-   * This is intentionally handled inside
-   * handleNext() after the final answer has
-   * been successfully saved.
+   * Only used for a new/in-progress assessment.
    */
   async function completeAssessment() {
     const response = await fetch(
@@ -546,8 +674,7 @@ export default function AssessmentFlow() {
       }
     );
 
-    const data =
-      await response.json();
+    const data = await response.json();
 
     if (!response.ok) {
       throw new Error(
@@ -560,17 +687,16 @@ export default function AssessmentFlow() {
   }
 
   /*
-   * IMPORTANT:
+   * Move to the next question.
    *
-   * isSubmitting is locked immediately at
-   * the beginning of this function.
+   * Review mode:
+   * - no API call
+   * - simply navigate through saved answers
    *
-   * This prevents:
-   *
-   * - double clicks
-   * - duplicate answer requests
-   * - duplicate completion requests
-   * - an extra request after completion
+   * Normal mode:
+   * - save answer
+   * - move forward
+   * - complete assessment on final step
    */
   async function handleNext() {
     if (
@@ -583,34 +709,9 @@ export default function AssessmentFlow() {
     setError("");
 
     /*
-     * Lock navigation BEFORE any async
-     * operation starts.
+     * REVIEW MODE
      */
-    setIsSubmitting(true);
-
-    try {
-      /*
-       * Validate current question.
-       */
-      if (!isCurrentStepValid()) {
-        setError(
-          "Please complete this section before continuing."
-        );
-
-        return;
-      }
-
-      /*
-       * Save current answer.
-       */
-      await saveAnswer(
-        currentQuestion.id
-      );
-
-      /*
-       * If this isn't the last question,
-       * simply move to the next step.
-       */
+    if (isReviewMode) {
       if (
         draft.step <
         TOTAL_STEPS - 1
@@ -624,20 +725,44 @@ export default function AssessmentFlow() {
       }
 
       /*
-       * Last question:
-       *
-       * The final answer has already been
-       * saved above.
-       *
-       * Now generate Brand DNA.
-       */
-      await completeAssessment();
-
-      /*
-       * Only redirect after successful
-       * backend completion.
+       * Final review step.
+       * Go to Brand DNA instead of regenerating it.
        */
       router.push("/results");
+      return;
+    }
+
+    /*
+     * NORMAL ASSESSMENT MODE
+     */
+    setIsSubmitting(true);
+
+    try {
+      if (!isCurrentStepValid()) {
+        setError(
+          "Please complete this section before continuing."
+        );
+
+        return;
+      }
+
+      await saveAnswer(currentQuestion.id);
+
+      if (
+        draft.step <
+        TOTAL_STEPS - 1
+      ) {
+        setDraft((current) => ({
+          ...current,
+          step: current.step + 1,
+        }));
+
+        return;
+      }
+
+      await completeAssessment();
+
+      router.replace("/results");
     } catch (error) {
       console.error(
         "Assessment flow error:",
@@ -650,10 +775,6 @@ export default function AssessmentFlow() {
           : "Something went wrong. Please try again."
       );
     } finally {
-      /*
-       * Unlock only after the entire operation
-       * has finished.
-       */
       setIsSubmitting(false);
     }
   }
@@ -694,7 +815,9 @@ export default function AssessmentFlow() {
               <input
                 id="personName"
                 type="text"
+                autoComplete="name"
                 value={draft.personName}
+                readOnly={isReviewMode}
                 onChange={(event) =>
                   updateDraft({
                     personName:
@@ -702,38 +825,75 @@ export default function AssessmentFlow() {
                   })
                 }
                 placeholder="Your full name"
-                className="w-full border-b border-black/20 bg-transparent px-0 py-4 text-2xl outline-none transition focus:border-black"
+                className={`w-full border-b px-0 py-4 text-xl outline-none transition md:text-2xl ${
+                  isReviewMode
+                    ? "cursor-default border-black/10 bg-transparent text-black/70"
+                    : "border-black/20 bg-transparent focus:border-black"
+                }`}
               />
+
+              <p className="mt-3 text-xs text-black/40">
+                This will be used to personalize your
+                Brand DNA.
+              </p>
             </div>
           </div>
         );
 
       case "values":
         return (
-          <div className="grid gap-4 md:grid-cols-3">
-            {VALUE_OPTIONS.map(
-              (value) => {
+          <div>
+            <div className="mb-6 flex items-center justify-between">
+              <p className="text-sm text-black/50">
+                {isReviewMode
+                  ? "Your selected values."
+                  : "Select exactly 3 values."}
+              </p>
+
+              <p className="text-xs font-medium uppercase tracking-[0.15em] text-black/40">
+                {draft.selectedValues.length} / 3 selected
+              </p>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-3">
+              {VALUE_OPTIONS.map((value) => {
                 const selected =
                   draft.selectedValues.includes(
                     value.id
                   );
+
+                const disabled =
+                  !selected &&
+                  draft.selectedValues.length >= 3;
 
                 return (
                   <button
                     key={value.id}
                     type="button"
                     onClick={() =>
-                      toggleValue(
-                        value.id
-                      )
+                      toggleValue(value.id)
                     }
+                    disabled={
+                      disabled ||
+                      isReviewMode
+                    }
+                    aria-pressed={selected}
                     className={`min-h-40 border p-6 text-left transition ${
                       selected
-                        ? "border-black bg-black text-white"
-                        : "border-black/15 bg-white hover:border-black"
+                        ? "border-[#171519] bg-[#171519] text-white"
+                        : disabled ||
+                            isReviewMode
+                          ? "cursor-default border-black/10 bg-black/[0.02] opacity-60"
+                          : "border-black/15 bg-white hover:border-black"
                     }`}
                   >
-                    <div className="mb-4 text-xs tracking-[0.2em]">
+                    <div
+                      className={`mb-4 text-[10px] font-medium tracking-[0.2em] ${
+                        selected
+                          ? "text-white/50"
+                          : "text-black/40"
+                      }`}
+                    >
                       {selected
                         ? "SELECTED"
                         : "VALUE"}
@@ -750,24 +910,37 @@ export default function AssessmentFlow() {
                           : "text-black/60"
                       }`}
                     >
-                      {
-                        value.description
-                      }
+                      {value.description}
                     </p>
                   </button>
                 );
-              }
-            )}
+              })}
+            </div>
           </div>
         );
 
       case "archetypes":
         return (
-          <div className="space-y-10">
+          <div className="space-y-12">
             <div>
-              <p className="mb-4 text-xs font-medium uppercase tracking-[0.2em]">
-                Primary archetype
-              </p>
+              <div className="mb-5 flex items-end justify-between gap-4">
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-[0.2em]">
+                    Primary archetype
+                  </p>
+
+                  <p className="mt-2 text-sm text-black/45">
+                    Choose the archetype that best represents
+                    your core identity.
+                  </p>
+                </div>
+
+                {draft.primaryArchetypeId && (
+                  <span className="shrink-0 text-xs uppercase tracking-[0.15em] text-black/40">
+                    Selected
+                  </span>
+                )}
+              </div>
 
               <div className="grid gap-4 md:grid-cols-2">
                 {ARCHETYPE_OPTIONS.map(
@@ -778,49 +951,55 @@ export default function AssessmentFlow() {
 
                     return (
                       <button
-                        key={
-                          archetype.id
-                        }
+                        key={archetype.id}
                         type="button"
                         onClick={() =>
                           selectArchetype(
                             archetype.id
                           )
                         }
+                        disabled={isReviewMode}
+                        aria-pressed={selected}
                         className={`border p-6 text-left transition ${
                           selected
-                            ? "border-black bg-black text-white"
-                            : "border-black/15 bg-white hover:border-black"
+                            ? "border-[#171519] bg-[#171519] text-white"
+                            : isReviewMode
+                              ? "cursor-default border-black/10 bg-black/[0.02] opacity-60"
+                              : "border-black/15 bg-white hover:border-black"
                         }`}
                       >
-                        <h3 className="text-lg font-semibold">
-                          {
-                            archetype.title
-                          }
-                        </h3>
+                        <div className="flex items-start justify-between gap-4">
+                          <div>
+                            <h3 className="text-lg font-semibold">
+                              {archetype.title}
+                            </h3>
 
-                        <p
-                          className={`mt-1 text-sm ${
-                            selected
-                              ? "text-white/70"
-                              : "text-black/50"
-                          }`}
-                        >
-                          {
-                            archetype.subtitle
-                          }
-                        </p>
+                            <p
+                              className={`mt-1 text-sm ${
+                                selected
+                                  ? "text-white/60"
+                                  : "text-black/50"
+                              }`}
+                            >
+                              {archetype.subtitle}
+                            </p>
+                          </div>
+
+                          {selected && (
+                            <span className="text-xs tracking-[0.15em]">
+                              ✓
+                            </span>
+                          )}
+                        </div>
 
                         <p
                           className={`mt-4 text-sm leading-6 ${
                             selected
-                              ? "text-white/80"
+                              ? "text-white/75"
                               : "text-black/60"
                           }`}
                         >
-                          {
-                            archetype.description
-                          }
+                          {archetype.description}
                         </p>
                       </button>
                     );
@@ -830,9 +1009,16 @@ export default function AssessmentFlow() {
             </div>
 
             <div>
-              <p className="mb-4 text-xs font-medium uppercase tracking-[0.2em]">
-                Secondary archetype
-              </p>
+              <div className="mb-5">
+                <p className="text-xs font-medium uppercase tracking-[0.2em]">
+                  Secondary archetype
+                </p>
+
+                <p className="mt-2 text-sm text-black/45">
+                  Choose a complementary archetype that
+                  strengthens your identity.
+                </p>
+              </div>
 
               <div className="grid gap-4 md:grid-cols-2">
                 {ARCHETYPE_OPTIONS.map(
@@ -847,43 +1033,50 @@ export default function AssessmentFlow() {
 
                     return (
                       <button
-                        key={
-                          archetype.id
-                        }
+                        key={archetype.id}
                         type="button"
                         disabled={
-                          disabled
+                          disabled ||
+                          isReviewMode
                         }
                         onClick={() =>
                           selectSecondaryArchetype(
                             archetype.id
                           )
                         }
+                        aria-pressed={selected}
                         className={`border p-6 text-left transition ${
-                          disabled
-                            ? "cursor-not-allowed opacity-30"
-                            : selected
-                              ? "border-black bg-black text-white"
+                          selected
+                            ? "border-[#171519] bg-[#171519] text-white"
+                            : disabled ||
+                                isReviewMode
+                              ? "cursor-default border-black/10 bg-black/[0.02] opacity-50"
                               : "border-black/15 bg-white hover:border-black"
                         }`}
                       >
-                        <h3 className="text-lg font-semibold">
-                          {
-                            archetype.title
-                          }
-                        </h3>
+                        <div className="flex items-start justify-between gap-4">
+                          <div>
+                            <h3 className="text-lg font-semibold">
+                              {archetype.title}
+                            </h3>
 
-                        <p
-                          className={`mt-1 text-sm ${
-                            selected
-                              ? "text-white/70"
-                              : "text-black/50"
-                          }`}
-                        >
-                          {
-                            archetype.subtitle
-                          }
-                        </p>
+                            <p
+                              className={`mt-1 text-sm ${
+                                selected
+                                  ? "text-white/60"
+                                  : "text-black/50"
+                              }`}
+                            >
+                              {archetype.subtitle}
+                            </p>
+                          </div>
+
+                          {selected && (
+                            <span className="text-xs tracking-[0.15em]">
+                              ✓
+                            </span>
+                          )}
+                        </div>
                       </button>
                     );
                   }
@@ -895,192 +1088,279 @@ export default function AssessmentFlow() {
 
       case "textarea":
         return (
-          <textarea
-            value={
-              currentQuestion.id ===
-              "purpose"
-                ? draft.purpose
-                : draft.vision
-            }
-            onChange={(event) =>
-              updateDraft({
-                [currentQuestion.id]:
-                  event.target.value,
-              } as Partial<AssessmentDraft>)
-            }
-            placeholder={
-              currentQuestion.id ===
-              "purpose"
-                ? "Write your purpose..."
-                : "Describe the professional future you want to build..."
-            }
-            rows={7}
-            className="w-full resize-none border border-black/15 bg-white p-6 text-lg leading-8 outline-none transition focus:border-black"
-          />
+          <div>
+            <textarea
+              value={
+                currentQuestion.id ===
+                "purpose"
+                  ? draft.purpose
+                  : draft.vision
+              }
+              readOnly={isReviewMode}
+              onChange={(event) =>
+                updateDraft({
+                  [currentQuestion.id]:
+                    event.target.value,
+                } as Partial<AssessmentDraft>)
+              }
+              placeholder={
+                currentQuestion.id ===
+                "purpose"
+                  ? "Write your purpose..."
+                  : "Describe the professional future you want to build..."
+              }
+              rows={8}
+              className={`w-full resize-none border p-6 text-base leading-8 outline-none transition md:text-lg ${
+                isReviewMode
+                  ? "cursor-default border-black/10 bg-black/[0.02] text-black/70"
+                  : "border-black/15 bg-white focus:border-black"
+              }`}
+            />
+
+            <p className="mt-3 text-xs text-black/40">
+              {isReviewMode
+                ? "This is a saved response from your completed assessment."
+                : "Take your time. There is no right or wrong answer."}
+            </p>
+          </div>
         );
 
       case "ikigai":
         return (
-          <div className="grid gap-6 md:grid-cols-2">
-            {(
-              [
-                [
-                  "passion",
-                  "What you love",
-                ],
-                [
-                  "mission",
-                  "What the world needs",
-                ],
-                [
-                  "vocation",
-                  "What you are good at",
-                ],
-                [
-                  "profession",
-                  "What you can build a career around",
-                ],
-              ] as const
-            ).map(
-              ([key, label]) => (
-                <div key={key}>
-                  <label className="mb-3 block text-sm font-medium">
-                    {label}
-                  </label>
+          <div>
+            <div className="mb-7">
+              <p className="text-sm text-black/50">
+                Explore the four dimensions of your Ikigai.
+                The intersection is optional.
+              </p>
+            </div>
 
-                  <textarea
-                    value={
-                      draft.ikigai[key]
-                    }
-                    onChange={(event) =>
-                      updateIkigai(
-                        key,
-                        event.target
-                          .value
-                      )
-                    }
-                    rows={5}
-                    className="w-full resize-none border border-black/15 bg-white p-4 outline-none transition focus:border-black"
-                  />
-                </div>
-              )
-            )}
+            <div className="grid gap-6 md:grid-cols-2">
+              {(
+                [
+                  [
+                    "passion",
+                    "What you love",
+                  ],
+                  [
+                    "mission",
+                    "What the world needs",
+                  ],
+                  [
+                    "vocation",
+                    "What you are good at",
+                  ],
+                  [
+                    "profession",
+                    "What you can build a career around",
+                  ],
+                ] as const
+              ).map(
+                ([key, label]) => (
+                  <div key={key}>
+                    <label
+                      htmlFor={`ikigai-${key}`}
+                      className="mb-3 block text-sm font-medium"
+                    >
+                      {label}
+                    </label>
 
-            <div className="md:col-span-2">
-              <label className="mb-3 block text-sm font-medium">
-                Your intersection
-                <span className="ml-2 text-black/40">
-                  Optional
-                </span>
-              </label>
+                    <textarea
+                      id={`ikigai-${key}`}
+                      value={
+                        draft.ikigai[key]
+                      }
+                      readOnly={isReviewMode}
+                      onChange={(event) =>
+                        updateIkigai(
+                          key,
+                          event.target.value
+                        )
+                      }
+                      rows={5}
+                      className={`w-full resize-none border p-4 leading-7 outline-none transition ${
+                        isReviewMode
+                          ? "cursor-default border-black/10 bg-black/[0.02] text-black/70"
+                          : "border-black/15 bg-white focus:border-black"
+                      }`}
+                    />
+                  </div>
+                )
+              )}
 
-              <textarea
-                value={
-                  draft.ikigai
-                    .intersection ?? ""
-                }
-                onChange={(event) =>
-                  updateIkigai(
-                    "intersection",
-                    event.target.value
-                  )
-                }
-                rows={4}
-                placeholder="Where do these four dimensions meet?"
-                className="w-full resize-none border border-black/15 bg-white p-4 outline-none transition focus:border-black"
-              />
+              <div className="md:col-span-2">
+                <label
+                  htmlFor="ikigai-intersection"
+                  className="mb-3 block text-sm font-medium"
+                >
+                  Your intersection
+
+                  <span className="ml-2 text-black/40">
+                    Optional
+                  </span>
+                </label>
+
+                <textarea
+                  id="ikigai-intersection"
+                  value={
+                    draft.ikigai
+                      .intersection ?? ""
+                  }
+                  readOnly={isReviewMode}
+                  onChange={(event) =>
+                    updateIkigai(
+                      "intersection",
+                      event.target.value
+                    )
+                  }
+                  rows={4}
+                  placeholder="Where do these four dimensions meet?"
+                  className={`w-full resize-none border p-4 leading-7 outline-none transition ${
+                    isReviewMode
+                      ? "cursor-default border-black/10 bg-black/[0.02] text-black/70"
+                      : "border-black/15 bg-white focus:border-black"
+                  }`}
+                />
+              </div>
             </div>
           </div>
         );
 
       case "perception":
         return (
-          <div className="space-y-10">
-            {PERCEPTION_DIMENSIONS.map(
-              (dimension) => {
-                const key =
-                  dimension.id as keyof AssessmentDraft["perception"];
+          <div>
+            <p className="mb-10 text-sm leading-6 text-black/50">
+              There are no right answers. Move each slider
+              toward the side that feels more natural to you.
+            </p>
 
-                const value =
-                  draft.perception[key];
+            <div className="space-y-12">
+              {PERCEPTION_DIMENSIONS.map(
+                (dimension) => {
+                  const key =
+                    dimension.id as keyof AssessmentDraft["perception"];
 
-                return (
-                  <div
-                    key={
-                      dimension.id
-                    }
-                  >
-                    <div className="mb-4 flex justify-between gap-4 text-sm">
-                      <span>
-                        {
-                          dimension.leftLabel
-                        }
-                      </span>
+                  const value =
+                    draft.perception[key];
 
-                      <span>
-                        {
-                          dimension.rightLabel
-                        }
-                      </span>
-                    </div>
+                  return (
+                    <div
+                      key={dimension.id}
+                    >
+                      <div className="mb-5 flex items-center justify-between gap-6 text-sm">
+                        <span className="max-w-[40%] font-medium">
+                          {dimension.leftLabel}
+                        </span>
 
-                    <input
-                      type="range"
-                      min="0"
-                      max="100"
-                      value={value}
-                      onChange={(event) =>
-                        updatePerception(
-                          key,
-                          Number(
-                            event.target
-                              .value
+                        <span className="text-xs font-medium uppercase tracking-[0.15em] text-black/35">
+                          {value}
+                        </span>
+
+                        <span className="max-w-[40%] text-right font-medium">
+                          {dimension.rightLabel}
+                        </span>
+                      </div>
+
+                      <input
+                        type="range"
+                        min="0"
+                        max="100"
+                        value={value}
+                        disabled={isReviewMode}
+                        onChange={(event) =>
+                          updatePerception(
+                            key,
+                            Number(
+                              event.target
+                                .value
+                            )
                           )
-                        )
-                      }
-                      className="w-full"
-                    />
+                        }
+                        aria-label={`${dimension.leftLabel} versus ${dimension.rightLabel}`}
+                        className={`w-full ${
+                          isReviewMode
+                            ? "cursor-default opacity-70"
+                            : "cursor-pointer accent-[#171519]"
+                        }`}
+                      />
 
-                    <div className="mt-2 text-center text-xs text-black/40">
-                      {value}
+                      <div className="mt-3 flex justify-between text-[10px] uppercase tracking-[0.15em] text-black/30">
+                        <span>
+                          {dimension.leftLabel}
+                        </span>
+
+                        <span>
+                          {dimension.rightLabel}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                );
-              }
-            )}
+                  );
+                }
+              )}
+            </div>
           </div>
         );
 
       case "voice":
         return (
-          <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-4">
-            {VOICE_TONES.map(
-              (tone) => {
+          <div>
+            <div className="mb-6 flex items-center justify-between gap-4">
+              <p className="text-sm text-black/50">
+                {isReviewMode
+                  ? "Your selected voice qualities."
+                  : "Select the qualities you want your voice to communicate."}
+              </p>
+
+              <p className="shrink-0 text-xs font-medium uppercase tracking-[0.15em] text-black/40">
+                {draft.selectedTones.length} / 4
+              </p>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-4">
+              {VOICE_TONES.map((tone) => {
                 const selected =
                   draft.selectedTones.includes(
                     tone
                   );
+
+                const disabled =
+                  !selected &&
+                  draft.selectedTones.length >= 4;
 
                 return (
                   <button
                     key={tone}
                     type="button"
                     onClick={() =>
-                      toggleTone(
-                        tone
-                      )
+                      toggleTone(tone)
                     }
+                    disabled={
+                      disabled ||
+                      isReviewMode
+                    }
+                    aria-pressed={selected}
                     className={`border px-5 py-4 text-sm transition ${
                       selected
-                        ? "border-black bg-black text-white"
-                        : "border-black/15 bg-white hover:border-black"
+                        ? "border-[#171519] bg-[#171519] text-white"
+                        : disabled ||
+                            isReviewMode
+                          ? "cursor-default border-black/10 bg-black/[0.02] opacity-50"
+                          : "border-black/15 bg-white hover:border-black"
                     }`}
                   >
-                    {tone}
+                    <span className="flex items-center justify-between gap-3">
+                      {tone}
+
+                      {selected && (
+                        <span className="text-xs">
+                          ✓
+                        </span>
+                      )}
+                    </span>
                   </button>
                 );
-              }
-            )}
+              })}
+            </div>
           </div>
         );
 
@@ -1089,48 +1369,97 @@ export default function AssessmentFlow() {
     }
   }
 
+  const isLastStep =
+    draft.step === TOTAL_STEPS - 1;
+
+  const isFirstStep =
+    draft.step === 0;
+
   return (
     <main className="min-h-screen bg-[#F8F5F1] text-[#171519]">
-      <div className="mx-auto max-w-6xl px-6 py-10 md:px-10 md:py-16">
-        {/* Header */}
-        <div className="mb-14 flex items-center justify-between">
+      <ClientHeader
+        currentPage="assessment"
+        showBack
+      />
+
+      <div className="mx-auto max-w-6xl px-6 py-10 md:px-10 md:py-14">
+        {/* Assessment meta */}
+        <div className="mb-10 flex items-end justify-between gap-6">
           <div>
-            <p className="text-sm font-semibold tracking-[0.25em]">
-              BARANDY
+            <p className="text-xs font-medium uppercase tracking-[0.25em] text-black/40">
+              {isReviewMode
+                ? "Assessment Review"
+                : "Your Brand DNA"}
             </p>
 
-            <p className="mt-2 text-xs text-black/45">
-              Personal Brand Intelligence
+            <p className="mt-2 text-sm text-black/45">
+              {isReviewMode
+                ? "Review the answers you submitted."
+                : "Your answers are saved as you continue."}
             </p>
           </div>
 
           <div className="text-right">
             <p className="text-xs uppercase tracking-[0.2em] text-black/40">
-              Assessment
+              Step
             </p>
 
-            <p className="mt-1 text-sm font-medium">
-              {draft.step + 1} /{" "}
-              {TOTAL_STEPS}
+            <p className="mt-1 text-lg font-semibold">
+              {String(draft.step + 1).padStart(
+                2,
+                "0"
+              )}{" "}
+              <span className="font-normal text-black/35">
+                / {String(TOTAL_STEPS).padStart(2, "0")}
+              </span>
             </p>
           </div>
         </div>
 
+        {/* Review mode notice */}
+        {isReviewMode && (
+          <div className="mb-10 border border-black/10 bg-white px-5 py-4">
+            <div className="flex items-start gap-4">
+              <span className="text-xs font-semibold">
+                ✓
+              </span>
+
+              <div>
+                <p className="text-xs font-medium uppercase tracking-[0.18em] text-black/45">
+                  Completed assessment
+                </p>
+
+                <p className="mt-2 text-sm leading-6 text-black/55">
+                  Your assessment has already been completed.
+                  You are viewing your saved answers in review
+                  mode.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Progress */}
-        <div className="mb-14">
-          <div className="mb-3 flex justify-between text-xs text-black/40">
+        <div className="mb-16">
+          <div className="mb-3 flex items-center justify-between text-xs text-black/40">
             <span>
-              Your Brand DNA
+              {progress}% complete
             </span>
 
             <span>
-              {progress}%
+              {isLastStep
+                ? "Final step"
+                : `${TOTAL_STEPS - draft.step - 1} ${
+                    TOTAL_STEPS - draft.step - 1 === 1
+                      ? "step"
+                      : "steps"
+                  } remaining`}
             </span>
           </div>
 
-          <div className="h-px bg-black/10">
+          <div className="h-[2px] bg-black/10">
             <div
-              className="h-px bg-[#171519] transition-all duration-500"
+              className="h-full bg-[#171519] transition-all duration-500 ease-out"
               style={{
                 width: `${progress}%`,
               }}
@@ -1140,76 +1469,92 @@ export default function AssessmentFlow() {
 
         {/* Question */}
         <section className="mx-auto max-w-5xl">
-          <div className="mb-10 max-w-3xl">
-            <p className="mb-4 text-xs font-medium uppercase tracking-[0.25em] text-black/40">
-              0
-              {draft.step + 1}
+          <div className="mb-12 max-w-3xl">
+            <p className="mb-5 text-xs font-medium uppercase tracking-[0.25em] text-black/35">
+              {String(
+                draft.step + 1
+              ).padStart(2, "0")}
             </p>
 
-            <h1 className="text-4xl font-semibold leading-tight tracking-tight md:text-6xl">
+            <h1 className="text-4xl font-semibold leading-[1.08] tracking-tight md:text-6xl">
               {currentQuestion.title}
             </h1>
 
             {currentQuestion.description && (
-              <p className="mt-6 max-w-2xl text-base leading-7 text-black/55 md:text-lg">
-                {
-                  currentQuestion.description
-                }
+              <p className="mt-7 max-w-2xl text-base leading-8 text-black/55 md:text-lg">
+                {currentQuestion.description}
               </p>
             )}
           </div>
 
-          {/* Content */}
+          {/* Question content */}
           <div className="min-h-[320px]">
             {renderQuestion()}
           </div>
 
           {/* Error */}
           {error && (
-            <div className="mt-8 border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700">
-              {error}
+            <div className="mt-10 flex items-start gap-4 border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700">
+              <span className="mt-0.5 font-medium">
+                !
+              </span>
+
+              <p className="leading-6">
+                {error}
+              </p>
             </div>
           )}
 
           {/* Navigation */}
-          <div className="mt-14 flex items-center justify-between border-t border-black/10 pt-8">
-            <button
-              type="button"
-              onClick={handleBack}
-              disabled={
-                draft.step === 0 ||
-                isInitializing ||
-                isSubmitting
-              }
-              className="text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-20"
-            >
-              ← Back
-            </button>
+          <div className="mt-16 border-t border-black/10 pt-8">
+            <div className="flex flex-col-reverse gap-5 sm:flex-row sm:items-center sm:justify-between">
+              <button
+                type="button"
+                onClick={handleBack}
+                disabled={
+                  isFirstStep ||
+                  isSubmitting
+                }
+                className="py-3 text-left text-sm font-medium text-black/50 transition hover:text-black disabled:cursor-not-allowed disabled:opacity-20"
+              >
+                ← Previous
+              </button>
 
-            <button
-              type="button"
-              onClick={handleNext}
-              disabled={
-                isInitializing ||
-                isSubmitting
-              }
-              className="bg-[#171519] px-8 py-4 text-sm font-medium text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {isInitializing
-                ? "Preparing..."
-                : isSubmitting
-                  ? draft.step ===
-                    TOTAL_STEPS - 1
-                    ? "Generating..."
-                    : "Saving..."
-                  : draft.step ===
-                      TOTAL_STEPS - 1
-                    ? "Generate My Brand DNA"
-                    : "Continue →"}
-            </button>
+              <button
+                type="button"
+                onClick={handleNext}
+                disabled={isSubmitting}
+                className="w-full bg-[#171519] px-8 py-4 text-sm font-medium text-white transition hover:bg-black/80 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:min-w-[220px]"
+              >
+                {isReviewMode
+                  ? isLastStep
+                    ? "View My Brand DNA →"
+                    : "Next →"
+                  : isSubmitting
+                    ? isLastStep
+                      ? "Generating..."
+                      : "Saving..."
+                    : isLastStep
+                      ? "Generate My Brand DNA"
+                      : "Continue →"}
+              </button>
+            </div>
+
+            <div className="mt-5 flex items-center justify-between gap-4 text-[10px] uppercase tracking-[0.15em] text-black/30">
+              <span>
+                {isReviewMode
+                  ? "Reviewing your saved assessment"
+                  : "Your progress is saved automatically"}
+              </span>
+
+              <span className="hidden sm:block">
+                Barandy Personal Brand Intelligence
+              </span>
+            </div>
           </div>
         </section>
       </div>
     </main>
   );
 }
+

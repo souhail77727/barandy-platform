@@ -1,0 +1,69 @@
+
+> barandy-platform@0.1.0 build
+> next build
+
+▲ Next.js 16.3.4 (Turbopack)
+- Environments: .env.local
+✓ Running next.config.ts took 27ms
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 1375ms
+  Running TypeScript ...
+  Finished TypeScript in 2.4s ...
+  Collecting page data using 11 workers ...
+  Generating static pages using 11 workers (0/14) ...
+  Generating static pages using 11 workers (3/14) 
+⨯ useSearchParams() should be wrapped in a suspense boundary at page "/dashboard". Read more: https://nextjs.org/docs/messages/missing-suspense-with-csr-bailout
+    at Object.X (C:\Users\ASUS\barandy-platform\.next\server\chunks\ssr\node_modules_next_0x3i8za._.js:2:3038)
+    at q (C:\Users\ASUS\barandy-platform\.next\server\chunks\ssr\node_modules_next_0x3i8za._.js:1:9742)
+    at C:\Users\ASUS\barandy-platform\.next\server\chunks\ssr\app_(client)_dashboard_page_tsx_0yhqgw-._.js:1:182
+    at al (C:\Users\ASUS\barandy-platform\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:2:85944)
+    at ac (C:\Users\ASUS\barandy-platform\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:2:87760)
+    at ah (C:\Users\ASUS\barandy-platform\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:2:109623)
+    at af (C:\Users\ASUS\barandy-platform\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:2:106940)
+    at au (C:\Users\ASUS\barandy-platform\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:2:86296)
+    at ac (C:\Users\ASUS\barandy-platform\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:2:87805)
+    at ac (C:\Users\ASUS\barandy-platform\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:2:106280)
+    at ah (C:\Users\ASUS\barandy-platform\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:2:109623)
+    at af (C:\Users\ASUS\barandy-platform\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:2:106940)
+    at aS (C:\Users\ASUS\barandy-platform\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:2:114685)
+    at ap (C:\Users\ASUS\barandy-platform\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:2:111684)
+    at ah (C:\Users\ASUS\barandy-platform\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:2:109897)
+    at af (C:\Users\ASUS\barandy-platform\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:2:106940)
+    at ac (C:\Users\ASUS\barandy-platform\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:2:100962)
+    at ah (C:\Users\ASUS\barandy-platform\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:2:109623)
+    at af (C:\Users\ASUS\barandy-platform\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:2:106940)
+    at ac (C:\Users\ASUS\barandy-platform\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:2:105898)
+    at ah (C:\Users\ASUS\barandy-platform\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:2:109623)
+    at af (C:\Users\ASUS\barandy-platform\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:2:106940)
+    at au (C:\Users\ASUS\barandy-platform\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:2:86296)
+    at ac (C:\Users\ASUS\barandy-platform\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:2:87805)
+    at ah (C:\Users\ASUS\barandy-platform\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:2:109623)
+    at af (C:\Users\ASUS\barandy-platform\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:2:106940)
+    at aS (C:\Users\ASUS\barandy-platform\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:2:114685)
+    at ap (C:\Users\ASUS\barandy-platform\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:2:111684)
+    at ah (C:\Users\ASUS\barandy-platform\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:2:109897)
+    at af (C:\Users\ASUS\barandy-platform\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:2:106940)
+    at ac (C:\Users\ASUS\barandy-platform\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:2:87724)
+    at ah (C:\Users\ASUS\barandy-platform\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:2:109623)
+    at af (C:\Users\ASUS\barandy-platform\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:2:106940)
+    at au (C:\Users\ASUS\barandy-platform\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:2:86296)
+    at ac (C:\Users\ASUS\barandy-platform\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:2:87805)
+    at ah (C:\Users\ASUS\barandy-platform\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:2:109623)
+    at af (C:\Users\ASUS\barandy-platform\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:2:106940)
+    at ac (C:\Users\ASUS\barandy-platform\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:2:100962)
+    at ah (C:\Users\ASUS\barandy-platform\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:2:109623)
+    at af (C:\Users\ASUS\barandy-platform\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:2:106940)
+    at au (C:\Users\ASUS\barandy-platform\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:2:86296)
+    at ac (C:\Users\ASUS\barandy-platform\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:2:87805)
+    at ah (C:\Users\ASUS\barandy-platform\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:2:109623)
+    at af (C:\Users\ASUS\barandy-platform\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:2:106940)
+    at ac (C:\Users\ASUS\barandy-platform\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:2:100962)
+    at ah (C:\Users\ASUS\barandy-platform\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:2:109623)
+    at af (C:\Users\ASUS\barandy-platform\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:2:106940)
+    at au (C:\Users\ASUS\barandy-platform\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:2:86296)
+    at ac (C:\Users\ASUS\barandy-platform\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:2:87805)
+    at ah (C:\Users\ASUS\barandy-platform\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:2:109623)
+Error occurred prerendering page "/dashboard". Read more: https://nextjs.org/docs/messages/prerender-error
+Export encountered an error on /(client)/dashboard/page: /dashboard, exiting the build.
+⨯ Next.js build worker exited with code: 1 and signal: null

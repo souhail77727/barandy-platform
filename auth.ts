@@ -7,24 +7,8 @@ import { prisma } from "@/lib/prisma";
 export const { auth, handlers, signIn, signOut } = NextAuth({
   providers: [
     Credentials({
-      name: "Credentials",
-
-      credentials: {
-        email: {
-          label: "Email",
-          type: "email",
-        },
-        password: {
-          label: "Password",
-          type: "password",
-        },
-      },
-
       async authorize(credentials) {
-        if (
-          !credentials?.email ||
-          !credentials?.password
-        ) {
+        if (!credentials?.email || !credentials?.password) {
           return null;
         }
 
@@ -56,9 +40,11 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
         return {
           id: user.id,
           email: user.email,
-          name: [user.firstName, user.lastName]
-            .filter(Boolean)
-            .join(" ") || user.email,
+          name:
+            [user.firstName, user.lastName]
+              .filter(Boolean)
+              .join(" ") || user.email,
+          role: user.role,
         };
       },
     }),
@@ -76,14 +62,24 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
+        token.role = user.role;
       }
 
       return token;
     },
 
     async session({ session, token }) {
-      if (session.user && token.id) {
-        session.user.id = token.id as string;
+      if (session.user) {
+        if (token.id) {
+          session.user.id = token.id as string;
+        }
+
+        if (token.role) {
+          session.user.role = token.role as
+            | "CLIENT"
+            | "ADMIN"
+            | "DEVELOPER";
+        }
       }
 
       return session;
