@@ -1,4 +1,4 @@
-
+import Image from "next/image";
 import Link from "next/link";
 
 import SignOutButton from "@/components/auth/SignOutButton";
@@ -24,18 +24,21 @@ export default function ClientHeader({
     <header className="border-b border-black/10">
       <div className="mx-auto max-w-6xl px-6 py-6 md:px-10">
         <div className="flex items-center justify-between gap-6">
-          {/* Brand */}
           <Link href="/" className="group shrink-0">
-            <p className="text-sm font-semibold tracking-[0.25em]">
-              BARANDY
-            </p>
+            <Image
+              src="/LOGO.jpg"
+              alt="Barandy"
+              width={140}
+              height={45}
+              className="h-auto w-[120px] object-contain"
+              priority
+            />
 
             <p className="mt-2 text-xs text-black/40 transition group-hover:text-black/70">
               Personal Brand Intelligence
             </p>
           </Link>
 
-          {/* Account */}
           <div className="flex items-center gap-4">
             <span className="hidden text-xs text-black/45 sm:block">
               {displayName}
@@ -45,7 +48,6 @@ export default function ClientHeader({
           </div>
         </div>
 
-        {/* Navigation */}
         <nav className="mt-7 flex flex-wrap items-center gap-x-6 gap-y-3">
           <NavLink
             href="/dashboard"
@@ -76,7 +78,6 @@ export default function ClientHeader({
           </NavLink>
         </nav>
 
-        {/* Back navigation */}
         {showBack && (
           <div className="mt-6">
             <Link
@@ -115,4 +116,3 @@ function NavLink({
     </Link>
   );
 }
-

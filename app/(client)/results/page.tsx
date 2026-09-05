@@ -1,80 +1,109 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { auth } from "@/auth";
+import ClientHeader from "@/components/layout/ClientHeader";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
-type BrandDNA = Record<string, unknown>;
+type BrandDNA = {
+  personName?: string;
 
-function formatLabel(key: string): string {
-  return key
-    .replace(/([A-Z])/g, " $1")
-    .replace(/[_-]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim()
-    .replace(/^./, (char) => char.toUpperCase());
-}
+  voice?: {
+    tone?: string[] | string;
+    style?: string[] | string;
+  };
 
-function renderValue(value: unknown): React.ReactNode {
-  if (value === null || value === undefined) {
-    return null;
+  values?: string[] | string;
+
+  vision?: string;
+  purpose?: string;
+
+  ikigai?: {
+    mission?: string;
+    passion?: string;
+    vocation?: string;
+    profession?: string;
+    intersection?: string;
+  };
+
+  perception?: {
+    specialistVsPolymath?: number;
+    innovationVsTradition?: number;
+    provocativeVsReassuring?: number;
+    authorityVsAccessibility?: number;
+  };
+
+  primaryArchetype?: {
+    id?: string;
+    name?: string;
+    icon?: string;
+    motto?: string;
+    shadow?: string;
+    dominance?: number;
+  };
+
+  secondaryArchetype?: {
+    id?: string;
+    name?: string;
+    icon?: string;
+    motto?: string;
+    shadow?: string;
+    dominance?: number;
+  };
+
+  colorPalette?: {
+    accent?: string;
+    primary?: string;
+    secondary?: string;
+    darkNeutral?: string;
+    lightNeutral?: string;
+  };
+
+  elevatorPitch?: string;
+
+  executivePositioning?: string;
+
+  strategicManifesto?: string;
+
+  strategicAdvices?: string[];
+
+  contentPillars?: Array<
+    | string
+    | {
+        title?: string;
+        description?: string;
+      }
+  >;
+};
+
+function toArray(value?: string[] | string): string[] {
+  if (Array.isArray(value)) {
+    return value;
   }
 
   if (typeof value === "string") {
-    return (
-      <p className="whitespace-pre-wrap text-base leading-7 text-black/65">
-        {value}
-      </p>
-    );
+    return value
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
   }
 
-  if (typeof value === "number" || typeof value === "boolean") {
-    return (
-      <p className="text-base text-black/65">
-        {String(value)}
-      </p>
-    );
-  }
-
-  if (Array.isArray(value)) {
-    return (
-      <ul className="space-y-2">
-        {value.map((item, index) => (
-          <li
-            key={index}
-            className="border-l-2 border-black/10 pl-4 text-base leading-7 text-black/65"
-          >
-            {renderValue(item)}
-          </li>
-        ))}
-      </ul>
-    );
-  }
-
-  if (typeof value === "object") {
-    return (
-      <div className="space-y-5">
-        {Object.entries(value as Record<string, unknown>).map(
-          ([key, nestedValue]) => (
-            <div key={key}>
-              <p className="mb-2 text-xs font-medium uppercase tracking-[0.15em] text-black/40">
-                {formatLabel(key)}
-              </p>
-
-              {renderValue(nestedValue)}
-            </div>
-          )
-        )}
-      </div>
-    );
-  }
-
-  return null;
+  return [];
 }
 
-export default async function ResultsPage(): Promise<React.ReactNode> {
+function formatLabel(value?: string) {
+  if (!value) {
+    return "";
+  }
+
+  return value
+    .replace(/[-_]/g, " ")
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+export default async function ResultsPage() {
   const session = await auth();
 
   if (!session?.user?.id) {
@@ -86,7 +115,25 @@ export default async function ResultsPage(): Promise<React.ReactNode> {
       id: session.user.id,
     },
     select: {
+      firstName: true,
       accessGranted: true,
+
+      assessments: {
+        where: {
+          status: "COMPLETED",
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+        take: 1,
+        select: {
+          result: {
+            select: {
+              brandDNA: true,
+            },
+          },
+        },
+      },
     },
   });
 
@@ -94,244 +141,803 @@ export default async function ResultsPage(): Promise<React.ReactNode> {
     redirect("/sign-in");
   }
 
-  const assessment = await prisma.assessment.findFirst({
-    where: {
-      userId: session.user.id,
-      status: "COMPLETED",
-      result: {
-        isNot: null,
-      },
-    },
-    include: {
-      result: true,
-    },
-    orderBy: {
-      updatedAt: "desc",
-    },
-  });
+  const assessment = user.assessments[0];
 
   if (!assessment?.result) {
     redirect("/assessment");
   }
 
+  const brandDNA = assessment.result.brandDNA as BrandDNA;
+
+  /*
+   * ---------------------------------------------------------
+   * ACCESS PROTECTION
+   * ---------------------------------------------------------
+   */
+
   if (!user.accessGranted) {
     return (
-      <main className="min-h-screen bg-[#F8F5F1] text-[#171519]">
-        <div className="mx-auto flex min-h-screen max-w-5xl items-center px-6 py-16 md:px-10">
-          <div className="w-full">
-            <header className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-semibold tracking-[0.25em]">
-                  BARANDY
-                </p>
+      <div className="min-h-screen bg-[#F8F5F1] text-[#171519]">
+        <ClientHeader
+          firstName={user.firstName}
+          currentPage="results"
+          showBack
+        />
 
-                <p className="mt-2 text-xs text-black/45">
-                  Personal Brand Intelligence
-                </p>
-              </div>
+        <main className="mx-auto max-w-5xl px-6 py-16 md:px-10 md:py-24">
+          <div className="max-w-2xl">
+            <p className="text-xs font-medium uppercase tracking-[0.2em] text-black/40">
+              Brand DNA
+            </p>
 
-              <div className="text-right">
-                <p className="text-xs uppercase tracking-[0.2em] text-black/40">
-                  Assessment Complete
-                </p>
+            <h1 className="mt-5 text-4xl font-medium tracking-[-0.04em] md:text-6xl">
+              Your Brand DNA is ready.
+            </h1>
 
-                <p className="mt-1 text-sm font-medium">
-                  Brand DNA
-                </p>
-              </div>
-            </header>
+            <p className="mt-6 text-base leading-7 text-black/55 md:text-lg">
+              Your assessment has been analyzed and your personalized Brand
+              DNA profile has been generated.
+            </p>
 
-            <section className="mx-auto mt-24 max-w-3xl text-center md:mt-32">
-              <p className="mb-6 text-xs font-medium uppercase tracking-[0.25em] text-black/40">
-                Your Brand DNA is ready
+            <div className="mt-10 border border-black/10 bg-white p-8 md:p-10">
+              <p className="text-xs font-medium uppercase tracking-[0.15em] text-black/40">
+                Access restricted
               </p>
 
-              <h1 className="text-5xl font-semibold leading-[1.05] tracking-tight md:text-7xl">
-                Your personal brand,
-                <br />
-                has been decoded.
-              </h1>
+              <h2 className="mt-4 text-2xl font-medium tracking-[-0.02em]">
+                Complete payment verification to unlock your profile.
+              </h2>
 
-              <p className="mx-auto mt-8 max-w-2xl text-lg leading-8 text-black/55">
-                You have completed your Barandy assessment.
-                Your personalized Brand DNA has been generated
-                and is ready to be revealed.
+              <p className="mt-4 text-sm leading-6 text-black/55">
+                Your Brand DNA is securely stored. Once your payment has been
+                verified by the Barandy team, the complete profile will become
+                available here.
               </p>
 
-              <div className="mx-auto mt-14 max-w-2xl border border-black/10 bg-white p-8 text-left md:p-10">
-                <div className="flex items-start gap-5">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center border border-black/10 text-sm">
-                    🔒
-                  </div>
-
-                  <div>
-                    <p className="text-lg font-semibold tracking-tight">
-                      Your results are currently locked.
-                    </p>
-
-                    <p className="mt-3 text-sm leading-7 text-black/55">
-                      Your Brand DNA has already been generated.
-                      To unlock your personalized profile, please
-                      complete your payment and send your payment
-                      receipt to the Barandy team.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-8 border-t border-black/10 pt-8">
-                  <p className="text-xs font-medium uppercase tracking-[0.2em] text-black/40">
-                    What happens next?
-                  </p>
-
-                  <div className="mt-6 space-y-5">
-                    <div className="flex gap-5">
-                      <span className="text-sm font-medium">
-                        01
-                      </span>
-
-                      <div>
-                        <p className="text-sm font-medium">
-                          Complete your payment
-                        </p>
-
-                        <p className="mt-1 text-sm leading-6 text-black/50">
-                          Follow the payment instructions provided
-                          by the Barandy team.
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-5">
-                      <span className="text-sm font-medium">
-                        02
-                      </span>
-
-                      <div>
-                        <p className="text-sm font-medium">
-                          Send your receipt
-                        </p>
-
-                        <p className="mt-1 text-sm leading-6 text-black/50">
-                          Send your payment receipt to the Barandy
-                          team for verification.
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-5">
-                      <span className="text-sm font-medium">
-                        03
-                      </span>
-
-                      <div>
-                        <p className="text-sm font-medium">
-                          Get your Brand DNA
-                        </p>
-
-                        <p className="mt-1 text-sm leading-6 text-black/50">
-                          Once your payment is verified, your
-                          personalized Brand DNA will be unlocked.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-8 border-t border-black/10 pt-8">
-                  <Link
-                    href="/payment"
-                    className="block w-full bg-[#171519] px-6 py-4 text-center text-sm font-medium text-white transition hover:bg-black/80"
-                  >
-                    Payment & Receipt Instructions
-                  </Link>
-                </div>
-              </div>
-
-              <Link
-                href="/"
-                className="mt-8 inline-block text-sm text-black/50 transition hover:text-black"
+              <a
+                href="/payment"
+                className="mt-8 inline-flex bg-[#171519] px-7 py-4 text-xs font-medium uppercase tracking-[0.15em] text-white transition hover:bg-black/80"
               >
-                ← Back to Barandy
-              </Link>
-            </section>
+                View Payment Details
+              </a>
+            </div>
           </div>
-        </div>
-      </main>
+        </main>
+      </div>
     );
   }
 
-  const brandDNA = assessment.result.brandDNA as BrandDNA;
+  /*
+   * ---------------------------------------------------------
+   * NORMALIZED DATA
+   * ---------------------------------------------------------
+   */
+
+  const personName =
+    brandDNA.personName?.trim() ||
+    user.firstName?.trim() ||
+    "Your";
+
+  const voiceTone = toArray(brandDNA.voice?.tone);
+  const voiceStyle = toArray(brandDNA.voice?.style);
+  const values = toArray(brandDNA.values);
+
+  const primaryArchetype =
+    brandDNA.primaryArchetype?.name ||
+    formatLabel(brandDNA.primaryArchetype?.id) ||
+    "Primary Archetype";
+
+  const secondaryArchetype =
+    brandDNA.secondaryArchetype?.name ||
+    formatLabel(brandDNA.secondaryArchetype?.id) ||
+    "Secondary Archetype";
 
   return (
-    <main className="min-h-screen bg-[#F8F5F1] text-[#171519]">
-      <div className="mx-auto max-w-6xl px-6 py-10 md:px-10 md:py-16">
-        <header className="mb-16 flex items-center justify-between">
-          <div>
-            <p className="text-sm font-semibold tracking-[0.25em]">
-              BARANDY
-            </p>
+    <div className="min-h-screen bg-[#F8F5F1] text-[#171519]">
+      <ClientHeader
+        firstName={user.firstName}
+        currentPage="results"
+        showBack
+      />
 
-            <p className="mt-2 text-xs text-black/45">
-              Personal Brand Intelligence
-            </p>
-          </div>
+      <main className="mx-auto max-w-6xl px-6 py-16 md:px-10 md:py-24">
+        {/* =====================================================
+            HERO
+        ===================================================== */}
 
-          <div className="text-right">
-            <p className="text-xs uppercase tracking-[0.2em] text-black/40">
-              Your Results
-            </p>
-
-            <p className="mt-1 text-sm font-medium">
-              Brand DNA
-            </p>
-          </div>
-        </header>
-
-        <section className="mb-20 max-w-4xl">
-          <p className="mb-5 text-xs font-medium uppercase tracking-[0.25em] text-black/40">
+        <section className="border-b border-black/10 pb-16 md:pb-24">
+          <p className="text-xs font-medium uppercase tracking-[0.22em] text-black/40">
             Your Brand DNA
           </p>
 
-          <h1 className="text-5xl font-semibold leading-[1.05] tracking-tight md:text-7xl">
-            Your personal brand,
+          <h1 className="mt-6 max-w-5xl text-5xl font-medium leading-[0.95] tracking-[-0.05em] md:text-7xl">
+            {personName}
             <br />
-            decoded.
+            <span className="text-black/35">
+              your personal brand, decoded.
+            </span>
           </h1>
 
-          <p className="mt-8 max-w-2xl text-lg leading-8 text-black/55">
-            Your assessment has been analyzed. Below is your
-            personalized Brand DNA profile.
-          </p>
+          {brandDNA.elevatorPitch && (
+            <p className="mt-10 max-w-3xl text-lg leading-8 text-black/60 md:text-xl">
+              {brandDNA.elevatorPitch}
+            </p>
+          )}
+
+          <div className="mt-12 grid gap-px overflow-hidden border border-black/10 bg-black/10 md:grid-cols-3">
+            <StatCard
+              label="Primary Archetype"
+              value={primaryArchetype}
+            />
+
+            <StatCard
+              label="Secondary Archetype"
+              value={secondaryArchetype}
+            />
+
+            <StatCard
+              label="Brand Status"
+              value="Defined"
+            />
+          </div>
         </section>
 
-        <section className="space-y-6">
-          {Object.entries(brandDNA).map(([key, value]) => (
-            <article
-              key={key}
-              className="border border-black/10 bg-white p-8 md:p-10"
-            >
-              <div className="mb-8 flex items-start justify-between gap-6 border-b border-black/10 pb-6">
-                <h2 className="text-2xl font-semibold tracking-tight md:text-3xl">
-                  {formatLabel(key)}
-                </h2>
+        {/* =====================================================
+            POSITIONING
+        ===================================================== */}
 
-                <span className="text-xs uppercase tracking-[0.15em] text-black/30">
-                  Brand DNA
-                </span>
+        {brandDNA.executivePositioning && (
+          <section className="border-b border-black/10 py-16 md:py-24">
+            <SectionIntro
+              eyebrow="01 / Positioning"
+              title="How your brand should be perceived."
+              description="The strategic position that emerges from your assessment."
+            />
+
+            <div className="mt-12 max-w-4xl">
+              <p className="text-2xl font-medium leading-[1.35] tracking-[-0.025em] md:text-4xl md:leading-[1.3]">
+                {brandDNA.executivePositioning}
+              </p>
+            </div>
+          </section>
+        )}
+
+        {/* =====================================================
+            VOICE
+        ===================================================== */}
+
+        {(voiceTone.length > 0 || voiceStyle.length > 0) && (
+          <section className="border-b border-black/10 py-16 md:py-24">
+            <SectionIntro
+              eyebrow="02 / Voice"
+              title="How your brand sounds."
+              description="The qualities that should consistently shape your communication."
+            />
+
+            <div className="mt-12 grid gap-8 md:grid-cols-2">
+              {voiceTone.length > 0 && (
+                <div className="border border-black/10 bg-white p-8 md:p-10">
+                  <p className="text-xs font-medium uppercase tracking-[0.16em] text-black/40">
+                    Tone
+                  </p>
+
+                  <div className="mt-7 flex flex-wrap gap-3">
+                    {voiceTone.map((tone, index) => (
+                      <span
+                        key={`${tone}-${index}`}
+                        className="border border-black/10 px-4 py-3 text-sm"
+                      >
+                        {tone}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {voiceStyle.length > 0 && (
+                <div className="border border-black/10 bg-white p-8 md:p-10">
+                  <p className="text-xs font-medium uppercase tracking-[0.16em] text-black/40">
+                    Style
+                  </p>
+
+                  <div className="mt-7 flex flex-wrap gap-3">
+                    {voiceStyle.map((style, index) => (
+                      <span
+                        key={`${style}-${index}`}
+                        className="border border-black/10 px-4 py-3 text-sm"
+                      >
+                        {style}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </section>
+        )}
+
+        {/* =====================================================
+            ARCHETYPES
+        ===================================================== */}
+
+        {(brandDNA.primaryArchetype ||
+          brandDNA.secondaryArchetype) && (
+          <section className="border-b border-black/10 py-16 md:py-24">
+            <SectionIntro
+              eyebrow="03 / Archetypes"
+              title="The personality behind your brand."
+              description="Archetypes reveal the deeper character your brand naturally communicates."
+            />
+
+            <div className="mt-12 grid gap-6 md:grid-cols-2">
+              <ArchetypeCard
+                label="Primary Archetype"
+                archetype={brandDNA.primaryArchetype}
+              />
+
+              <ArchetypeCard
+                label="Secondary Archetype"
+                archetype={brandDNA.secondaryArchetype}
+              />
+            </div>
+          </section>
+        )}
+
+        {/* =====================================================
+            VALUES
+        ===================================================== */}
+
+        {values.length > 0 && (
+          <section className="border-b border-black/10 py-16 md:py-24">
+            <SectionIntro
+              eyebrow="04 / Values"
+              title="What your brand stands for."
+              description="The principles that should guide your decisions, behavior and communication."
+            />
+
+            <div className="mt-12 grid gap-px border border-black/10 bg-black/10 sm:grid-cols-2 lg:grid-cols-3">
+              {values.map((value, index) => (
+                <div
+                  key={`${value}-${index}`}
+                  className="bg-white p-8 md:p-10"
+                >
+                  <span className="text-xs text-black/30">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+
+                  <h3 className="mt-12 text-2xl font-medium tracking-[-0.025em]">
+                    {formatLabel(value)}
+                  </h3>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* =====================================================
+            IKIGAI
+        ===================================================== */}
+
+        {brandDNA.ikigai && (
+          <section className="border-b border-black/10 py-16 md:py-24">
+            <SectionIntro
+              eyebrow="05 / Ikigai"
+              title="The intersection that drives you."
+              description="Your purpose emerges where passion, capability, contribution and professional value meet."
+            />
+
+            <div className="mt-12 grid gap-px border border-black/10 bg-black/10 md:grid-cols-2">
+              <IkigaiCard
+                label="Mission"
+                value={brandDNA.ikigai.mission}
+              />
+
+              <IkigaiCard
+                label="Passion"
+                value={brandDNA.ikigai.passion}
+              />
+
+              <IkigaiCard
+                label="Vocation"
+                value={brandDNA.ikigai.vocation}
+              />
+
+              <IkigaiCard
+                label="Profession"
+                value={brandDNA.ikigai.profession}
+              />
+
+              {brandDNA.ikigai.intersection && (
+                <div className="bg-[#171519] p-8 text-white md:col-span-2 md:p-10">
+                  <p className="text-xs font-medium uppercase tracking-[0.16em] text-white/40">
+                    Intersection
+                  </p>
+
+                  <p className="mt-5 max-w-3xl text-2xl font-medium leading-8 tracking-[-0.025em] md:text-3xl">
+                    {brandDNA.ikigai.intersection}
+                  </p>
+                </div>
+              )}
+            </div>
+          </section>
+        )}
+
+        {/* =====================================================
+            PURPOSE + VISION
+        ===================================================== */}
+
+        {(brandDNA.purpose || brandDNA.vision) && (
+          <section className="border-b border-black/10 py-16 md:py-24">
+            <SectionIntro
+              eyebrow="06 / Direction"
+              title="Where your brand is going."
+              description="Your purpose defines why you exist. Your vision defines where you intend to go."
+            />
+
+            <div className="mt-12 grid gap-6 md:grid-cols-2">
+              {brandDNA.purpose && (
+                <TextCard
+                  label="Purpose"
+                  value={brandDNA.purpose}
+                />
+              )}
+
+              {brandDNA.vision && (
+                <TextCard
+                  label="Vision"
+                  value={brandDNA.vision}
+                />
+              )}
+            </div>
+          </section>
+        )}
+
+        {/* =====================================================
+            PERCEPTION
+        ===================================================== */}
+
+        {brandDNA.perception && (
+          <section className="border-b border-black/10 py-16 md:py-24">
+            <SectionIntro
+              eyebrow="07 / Perception"
+              title="How your brand naturally positions itself."
+              description="These dimensions show the strategic balance within your personal brand."
+            />
+
+            <div className="mt-12 space-y-10">
+              <PerceptionBar
+                left="Specialist"
+                right="Polymath"
+                value={brandDNA.perception.specialistVsPolymath}
+              />
+
+              <PerceptionBar
+                left="Innovation"
+                right="Tradition"
+                value={brandDNA.perception.innovationVsTradition}
+              />
+
+              <PerceptionBar
+                left="Provocative"
+                right="Reassuring"
+                value={brandDNA.perception.provocativeVsReassuring}
+              />
+
+              <PerceptionBar
+                left="Authority"
+                right="Accessibility"
+                value={brandDNA.perception.authorityVsAccessibility}
+              />
+            </div>
+          </section>
+        )}
+
+        {/* =====================================================
+            COLOR PALETTE
+        ===================================================== */}
+
+        {brandDNA.colorPalette && (
+          <section className="border-b border-black/10 py-16 md:py-24">
+            <SectionIntro
+              eyebrow="08 / Visual Identity"
+              title="Your visual direction."
+              description="A starting palette derived from your Brand DNA."
+            />
+
+            <div className="mt-12 grid grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-5">
+              <ColorSwatch
+                label="Accent"
+                value={brandDNA.colorPalette.accent}
+              />
+
+              <ColorSwatch
+                label="Primary"
+                value={brandDNA.colorPalette.primary}
+              />
+
+              <ColorSwatch
+                label="Secondary"
+                value={brandDNA.colorPalette.secondary}
+              />
+
+              <ColorSwatch
+                label="Dark Neutral"
+                value={brandDNA.colorPalette.darkNeutral}
+              />
+
+              <ColorSwatch
+                label="Light Neutral"
+                value={brandDNA.colorPalette.lightNeutral}
+              />
+            </div>
+          </section>
+        )}
+
+        {/* =====================================================
+            CONTENT PILLARS
+        ===================================================== */}
+
+        {brandDNA.contentPillars &&
+          brandDNA.contentPillars.length > 0 && (
+            <section className="border-b border-black/10 py-16 md:py-24">
+              <SectionIntro
+                eyebrow="09 / Content"
+                title="What your brand should talk about."
+                description="Strategic content territories that reinforce your positioning."
+              />
+
+              <div className="mt-12 grid gap-6 md:grid-cols-2">
+                {brandDNA.contentPillars.map((pillar, index) => {
+                  if (typeof pillar === "string") {
+                    return (
+                      <div
+                        key={`pillar-${index}`}
+                        className="border border-black/10 bg-white p-8 md:p-10"
+                      >
+                        <span className="text-xs text-black/30">
+                          {String(index + 1).padStart(2, "0")}
+                        </span>
+
+                        <h3 className="mt-10 text-2xl font-medium tracking-[-0.025em]">
+                          {pillar}
+                        </h3>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div
+                      key={`pillar-${index}`}
+                      className="border border-black/10 bg-white p-8 md:p-10"
+                    >
+                      <span className="text-xs text-black/30">
+                        {String(index + 1).padStart(2, "0")}
+                      </span>
+
+                      <h3 className="mt-10 text-2xl font-medium tracking-[-0.025em]">
+                        {pillar.title || "Content Pillar"}
+                      </h3>
+
+                      {pillar.description && (
+                        <p className="mt-5 text-sm leading-6 text-black/55">
+                          {pillar.description}
+                        </p>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
+            </section>
+          )}
 
-              {renderValue(value)}
-            </article>
-          ))}
+        {/* =====================================================
+            STRATEGIC ADVICE
+        ===================================================== */}
+
+        {brandDNA.strategicAdvices &&
+          brandDNA.strategicAdvices.length > 0 && (
+            <section className="border-b border-black/10 py-16 md:py-24">
+              <SectionIntro
+                eyebrow="10 / Strategic Direction"
+                title="How to activate your brand."
+                description="Practical strategic directions derived from your Brand DNA."
+              />
+
+              <div className="mt-12 space-y-px border border-black/10 bg-black/10">
+                {brandDNA.strategicAdvices.map((advice, index) => (
+                  <div
+                    key={`advice-${index}`}
+                    className="grid gap-6 bg-white p-8 md:grid-cols-[80px_1fr] md:p-10"
+                  >
+                    <span className="text-sm text-black/30">
+                      {String(index + 1).padStart(2, "0")}
+                    </span>
+
+                    <p className="max-w-3xl text-base leading-7 text-black/65">
+                      {advice}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+        {/* =====================================================
+            MANIFESTO
+        ===================================================== */}
+
+        {brandDNA.strategicManifesto && (
+          <section className="py-16 md:py-28">
+            <div className="bg-[#171519] px-8 py-14 text-white md:px-16 md:py-20">
+              <p className="text-xs font-medium uppercase tracking-[0.2em] text-white/40">
+                11 / Manifesto
+              </p>
+
+              <h2 className="mt-8 max-w-4xl text-3xl font-medium leading-[1.15] tracking-[-0.035em] md:text-5xl">
+                Your brand, in your own words.
+              </h2>
+
+              <div className="mt-10 max-w-3xl">
+                <p className="whitespace-pre-line text-lg leading-8 text-white/65 md:text-xl md:leading-9">
+                  {brandDNA.strategicManifesto}
+                </p>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* =====================================================
+            FOOTER
+        ===================================================== */}
+
+        <section className="border-t border-black/10 pt-10">
+          <div className="flex flex-col justify-between gap-6 md:flex-row md:items-center">
+            <div>
+              <p className="text-sm font-semibold tracking-[0.25em]">
+                BARANDY
+              </p>
+
+              <p className="mt-2 text-xs text-black/40">
+                Personal Brand Intelligence
+              </p>
+            </div>
+
+            <p className="max-w-md text-xs leading-5 text-black/35 md:text-right">
+              Your Brand DNA is a strategic foundation. The value comes from
+              consistently translating these insights into how you communicate,
+              create and position yourself.
+            </p>
+          </div>
         </section>
+      </main>
+    </div>
+  );
+}
 
-        <footer className="mt-16 border-t border-black/10 pt-8">
-          <p className="text-xs leading-6 text-black/40">
-            Generated from your Barandy Personal Brand Intelligence
-            assessment.
-          </p>
-        </footer>
+/*
+ * =========================================================
+ * PRESENTATIONAL COMPONENTS
+ * =========================================================
+ */
+
+function SectionIntro({
+  eyebrow,
+  title,
+  description,
+}: {
+  eyebrow: string;
+  title: string;
+  description: string;
+}) {
+  return (
+    <div className="max-w-2xl">
+      <p className="text-xs font-medium uppercase tracking-[0.2em] text-black/40">
+        {eyebrow}
+      </p>
+
+      <h2 className="mt-4 text-3xl font-medium tracking-[-0.035em] md:text-4xl">
+        {title}
+      </h2>
+
+      <p className="mt-4 text-sm leading-6 text-black/50">
+        {description}
+      </p>
+    </div>
+  );
+}
+
+function StatCard({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="bg-white p-7 md:p-8">
+      <p className="text-xs uppercase tracking-[0.15em] text-black/40">
+        {label}
+      </p>
+
+      <p className="mt-5 text-xl font-medium tracking-[-0.02em]">
+        {value}
+      </p>
+    </div>
+  );
+}
+
+function ArchetypeCard({
+  label,
+  archetype,
+}: {
+  label: string;
+  archetype?: {
+    id?: string;
+    name?: string;
+    icon?: string;
+    motto?: string;
+    shadow?: string;
+    dominance?: number;
+  };
+}) {
+  if (!archetype) {
+    return null;
+  }
+
+  const name =
+    archetype.name ||
+    formatLabel(archetype.id) ||
+    "Archetype";
+
+  return (
+    <div className="border border-black/10 bg-white p-8 md:p-10">
+      <div className="flex items-start justify-between gap-6">
+        <p className="text-xs font-medium uppercase tracking-[0.16em] text-black/40">
+          {label}
+        </p>
+
+        {typeof archetype.dominance === "number" && (
+          <span className="text-xs text-black/35">
+            {archetype.dominance}%
+          </span>
+        )}
       </div>
-    </main>
+
+      <h3 className="mt-8 text-3xl font-medium tracking-[-0.035em]">
+        {name}
+      </h3>
+
+      {archetype.motto && (
+        <p className="mt-5 text-base italic leading-7 text-black/55">
+          “{archetype.motto}”
+        </p>
+      )}
+
+      {archetype.shadow && (
+        <div className="mt-8 border-t border-black/10 pt-6">
+          <p className="text-xs uppercase tracking-[0.14em] text-black/35">
+            Shadow
+          </p>
+
+          <p className="mt-3 text-sm leading-6 text-black/55">
+            {archetype.shadow}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function IkigaiCard({
+  label,
+  value,
+}: {
+  label: string;
+  value?: string;
+}) {
+  if (!value) {
+    return null;
+  }
+
+  return (
+    <div className="bg-white p-8 md:p-10">
+      <p className="text-xs font-medium uppercase tracking-[0.16em] text-black/40">
+        {label}
+      </p>
+
+      <p className="mt-6 text-lg leading-7 text-black/70">
+        {value}
+      </p>
+    </div>
+  );
+}
+
+function TextCard({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="border border-black/10 bg-white p-8 md:p-10">
+      <p className="text-xs font-medium uppercase tracking-[0.16em] text-black/40">
+        {label}
+      </p>
+
+      <p className="mt-6 text-lg leading-8 text-black/65">
+        {value}
+      </p>
+    </div>
+  );
+}
+
+function PerceptionBar({
+  left,
+  right,
+  value,
+}: {
+  left: string;
+  right: string;
+  value?: number;
+}) {
+  const safeValue =
+    typeof value === "number"
+      ? Math.min(Math.max(value, 0), 100)
+      : 50;
+
+  return (
+    <div>
+      <div className="mb-3 flex items-center justify-between gap-4 text-xs uppercase tracking-[0.12em] text-black/40">
+        <span>{left}</span>
+        <span>{right}</span>
+      </div>
+
+      <div className="relative h-px bg-black/15">
+        <div
+          className="absolute top-1/2 h-3 w-3 -translate-y-1/2 rounded-full bg-[#171519]"
+          style={{
+            left: `${safeValue}%`,
+          }}
+        />
+      </div>
+
+      <div className="mt-2 text-right text-[10px] text-black/30">
+        {safeValue}%
+      </div>
+    </div>
+  );
+}
+
+function ColorSwatch({
+  label,
+  value,
+}: {
+  label: string;
+  value?: string;
+}) {
+  if (!value) {
+    return null;
+  }
+
+  return (
+    <div>
+      <div
+        className="aspect-square border border-black/10"
+        style={{
+          backgroundColor: value,
+        }}
+      />
+
+      <div className="mt-4">
+        <p className="text-xs uppercase tracking-[0.12em] text-black/40">
+          {label}
+        </p>
+
+        <p className="mt-2 font-mono text-xs text-black/55">
+          {value}
+        </p>
+      </div>
+    </div>
   );
 }
