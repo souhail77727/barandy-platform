@@ -61,6 +61,9 @@ export default function AssessmentFlow() {
   const [error, setError] =
     useState("");
 
+  const [accessPending, setAccessPending] =
+    useState(false);
+
   const currentQuestion =
     ASSESSMENT_QUESTIONS[draft.step];
 
@@ -78,6 +81,7 @@ export default function AssessmentFlow() {
       try {
         setIsInitializing(true);
         setError("");
+        setAccessPending(false);
 
         const response = await fetch(
           "/api/assessment/start",
@@ -88,6 +92,18 @@ export default function AssessmentFlow() {
 
         const data =
           await response.json();
+
+        /*
+         * The user is authenticated but
+         * has not been manually approved yet.
+         */
+        if (
+          response.status === 403 &&
+          data?.code === "ACCESS_PENDING"
+        ) {
+          setAccessPending(true);
+          return;
+        }
 
         if (!response.ok) {
           throw new Error(
@@ -135,6 +151,95 @@ export default function AssessmentFlow() {
 
     initializeAssessment();
   }, []);
+
+  /*
+   * Access pending state.
+   *
+   * The client is authenticated but has not
+   * been manually approved after payment.
+   */
+  if (accessPending) {
+    return (
+      <main className="min-h-screen bg-[#F8F5F1] text-[#171519]">
+        <div className="mx-auto flex min-h-screen max-w-4xl items-center justify-center px-6 py-16">
+          <div className="w-full max-w-2xl text-center">
+            <p className="text-sm font-semibold tracking-[0.25em]">
+              BARANDY
+            </p>
+
+            <p className="mt-3 text-xs uppercase tracking-[0.2em] text-black/40">
+              Personal Brand Intelligence
+            </p>
+
+            <div className="mt-16">
+              <p className="mb-6 text-xs font-medium uppercase tracking-[0.25em] text-black/40">
+                Access pending
+              </p>
+
+              <h1 className="text-4xl font-semibold leading-tight tracking-tight md:text-6xl">
+                Your assessment is waiting for you.
+              </h1>
+
+              <p className="mx-auto mt-8 max-w-xl text-base leading-8 text-black/55 md:text-lg">
+                Your account has been created successfully.
+                Once your payment has been verified, your
+                assessment access will be activated.
+              </p>
+
+              <div className="mx-auto mt-10 max-w-md border border-black/10 bg-white p-6 text-left">
+                <p className="text-sm font-semibold">
+                  What happens next?
+                </p>
+
+                <div className="mt-5 space-y-4 text-sm leading-6 text-black/60">
+                  <div className="flex gap-4">
+                    <span className="font-medium text-black">
+                      01
+                    </span>
+
+                    <span>
+                      Complete your payment using the
+                      provided instructions.
+                    </span>
+                  </div>
+
+                  <div className="flex gap-4">
+                    <span className="font-medium text-black">
+                      02
+                    </span>
+
+                    <span>
+                      Send your payment receipt to the
+                      Barandy team.
+                    </span>
+                  </div>
+
+                  <div className="flex gap-4">
+                    <span className="font-medium text-black">
+                      03
+                    </span>
+
+                    <span>
+                      Once verified, your assessment will
+                      be unlocked.
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => router.push("/")}
+                className="mt-10 border border-black/15 px-7 py-4 text-sm font-medium transition hover:border-black"
+              >
+                ← Back to Barandy
+              </button>
+            </div>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   if (!currentQuestion) {
     return null;
