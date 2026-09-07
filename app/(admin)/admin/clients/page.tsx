@@ -1,4 +1,3 @@
-
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -53,6 +52,7 @@ export default async function AdminClientsPage(): Promise<React.ReactNode> {
       email: true,
       firstName: true,
       lastName: true,
+      phone: true,
       accessGranted: true,
       createdAt: true,
 
@@ -332,6 +332,12 @@ export default async function AdminClientsPage(): Promise<React.ReactNode> {
                           {client.email}
                         </p>
 
+                        {client.phone && (
+                          <p className="mt-1 text-sm text-black/45">
+                            {client.phone}
+                          </p>
+                        )}
+
                         <p className="mt-3 text-xs text-black/35">
                           Joined {formatDate(client.createdAt)}
                         </p>
@@ -432,4 +438,3 @@ export default async function AdminClientsPage(): Promise<React.ReactNode> {
     </main>
   );
 }
-

@@ -1,3 +1,4 @@
+
 import Image from "next/image";
 import Link from "next/link";
 
@@ -26,11 +27,11 @@ export default function ClientHeader({
         <div className="flex items-center justify-between gap-6">
           <Link href="/" className="group shrink-0">
             <Image
-              src="/LOGO.jpg"
+              src="/LOGO.png"
               alt="Barandy"
-              width={140}
-              height={45}
-              className="h-auto w-[120px] object-contain"
+              width={180}
+              height={60}
+              className="h-auto w-[140px] object-contain"
               priority
             />
 
@@ -116,3 +117,4 @@ function NavLink({
     </Link>
   );
 }
+

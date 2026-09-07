@@ -42,6 +42,7 @@ model User {
   passwordHash  String
   firstName     String?
   lastName      String?
+  phone         String?
   role          UserRole @default(CLIENT)
   accessGranted Boolean  @default(false)
 

@@ -7,6 +7,17 @@ import {
   useState,
 } from "react";
 import { useRouter } from "next/navigation";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  CheckCircle2,
+  Clock3,
+  Compass,
+  LockKeyhole,
+  Sparkles,
+  Target,
+} from "lucide-react";
 
 import ClientHeader from "@/components/layout/ClientHeader";
 
@@ -63,18 +74,11 @@ export default function AssessmentFlow() {
   const [accessPending, setAccessPending] =
     useState(false);
 
-  /*
-   * Review mode is activated when the assessment
-   * has already been completed.
-   *
-   * In review mode:
-   * - answers are displayed
-   * - answers cannot be edited
-   * - no answer is saved again
-   * - assessment cannot be regenerated
-   */
   const [isReviewMode, setIsReviewMode] =
     useState(false);
+
+  const [direction, setDirection] =
+    useState<"forward" | "back">("forward");
 
   const currentQuestion =
     ASSESSMENT_QUESTIONS[draft.step];
@@ -89,8 +93,53 @@ export default function AssessmentFlow() {
     );
   }, [draft.step]);
 
+  const isLastStep =
+    draft.step === TOTAL_STEPS - 1;
+
+  const isFirstStep =
+    draft.step === 0;
+
+  const remainingSteps =
+    TOTAL_STEPS - draft.step - 1;
+
   /*
-   * Initialize or resume the assessment.
+   * Small contextual label for each stage.
+   * This makes the assessment feel like a journey
+   * rather than a collection of unrelated questions.
+   */
+  const stageLabel = useMemo(() => {
+    switch (currentQuestion?.id) {
+      case "identity":
+        return "Foundation";
+
+      case "values":
+        return "Values";
+
+      case "archetypes":
+        return "Identity";
+
+      case "purpose":
+        return "Purpose";
+
+      case "vision":
+        return "Direction";
+
+      case "ikigai":
+        return "Ikigai";
+
+      case "perception":
+        return "Perception";
+
+      case "voice":
+        return "Expression";
+
+      default:
+        return "Discovery";
+    }
+  }, [currentQuestion?.id]);
+
+  /*
+   * Initialize / resume assessment.
    */
   useEffect(() => {
     async function initializeAssessment() {
@@ -109,10 +158,6 @@ export default function AssessmentFlow() {
 
         const data = await response.json();
 
-        /*
-         * Authenticated user whose access
-         * has not been approved yet.
-         */
         if (
           response.status === 403 &&
           data?.code === "ACCESS_PENDING"
@@ -128,15 +173,6 @@ export default function AssessmentFlow() {
           );
         }
 
-        /*
-         * IMPORTANT:
-         *
-         * A completed assessment should NOT redirect
-         * to /results automatically.
-         *
-         * Instead, load the saved answers and open
-         * the assessment in review mode.
-         */
         if (data.status === "COMPLETED") {
           setIsReviewMode(true);
 
@@ -160,11 +196,6 @@ export default function AssessmentFlow() {
                   : TOTAL_STEPS - 1,
             }));
           } else {
-            /*
-             * If the API doesn't return progress for
-             * a completed assessment, start the review
-             * at the final section.
-             */
             setDraft((current) => ({
               ...current,
               step: TOTAL_STEPS - 1,
@@ -174,9 +205,6 @@ export default function AssessmentFlow() {
           return;
         }
 
-        /*
-         * Resume previously saved answers.
-         */
         if (
           data.answers &&
           typeof data.answers === "object" &&
@@ -225,22 +253,29 @@ export default function AssessmentFlow() {
           showBack
         />
 
-        <div className="flex min-h-[70vh] items-center justify-center px-6">
+        <div className="flex min-h-[75vh] items-center justify-center px-6">
           <div className="w-full max-w-md text-center">
-            <p className="text-xs font-medium uppercase tracking-[0.25em] text-black/40">
-              Assessment
+            <div className="mx-auto flex h-12 w-12 items-center justify-center border border-black/10 bg-white">
+              <Compass
+                className="h-5 w-5 animate-pulse text-[#8B7653]"
+                strokeWidth={1.5}
+              />
+            </div>
+
+            <p className="mt-7 text-[10px] font-semibold uppercase tracking-[0.25em] text-[#8B7653]">
+              Barandy Assessment
             </p>
 
-            <h1 className="mt-5 text-3xl font-semibold tracking-tight">
-              Preparing your assessment
+            <h1 className="mt-4 text-3xl font-medium tracking-tight">
+              Preparing your experience
             </h1>
 
-            <p className="mt-4 text-sm leading-6 text-black/50">
-              Your workspace is being prepared. This
-              will only take a moment.
+            <p className="mx-auto mt-4 max-w-sm text-sm leading-6 text-black/45">
+              We're preparing your personal brand discovery
+              workspace.
             </p>
 
-            <div className="mx-auto mt-8 h-px w-32 overflow-hidden bg-black/10">
+            <div className="mx-auto mt-8 h-px w-40 overflow-hidden bg-black/10">
               <div className="h-full w-1/2 animate-pulse bg-[#171519]" />
             </div>
           </div>
@@ -250,10 +285,7 @@ export default function AssessmentFlow() {
   }
 
   /*
-   * Access pending state.
-   *
-   * The client is authenticated but has not
-   * been manually approved yet.
+   * Access pending.
    */
   if (accessPending) {
     return (
@@ -266,18 +298,25 @@ export default function AssessmentFlow() {
         <div className="mx-auto flex min-h-[75vh] max-w-5xl items-center justify-center px-6 py-16">
           <div className="w-full max-w-2xl">
             <div className="text-center">
-              <p className="text-xs font-medium uppercase tracking-[0.25em] text-black/40">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center border border-black/10 bg-white">
+                <LockKeyhole
+                  className="h-5 w-5 text-[#8B7653]"
+                  strokeWidth={1.5}
+                />
+              </div>
+
+              <p className="mt-7 text-[10px] font-semibold uppercase tracking-[0.25em] text-[#8B7653]">
                 Access pending
               </p>
 
-              <h1 className="mt-6 text-4xl font-semibold leading-tight tracking-tight md:text-6xl">
+              <h1 className="mt-5 text-4xl font-medium leading-[1.05] tracking-tight md:text-6xl">
                 Your assessment is waiting for you.
               </h1>
 
-              <p className="mx-auto mt-7 max-w-xl text-base leading-8 text-black/55 md:text-lg">
+              <p className="mx-auto mt-7 max-w-xl text-base leading-8 text-black/50">
                 Your account has been created successfully.
                 Once your payment has been verified, your
-                assessment access will be activated.
+                assessment experience will be activated.
               </p>
             </div>
 
@@ -286,57 +325,25 @@ export default function AssessmentFlow() {
                 What happens next?
               </p>
 
-              <div className="mt-6 space-y-5">
-                <div className="flex gap-5">
-                  <span className="text-xs font-medium tracking-[0.15em] text-black/40">
-                    01
-                  </span>
+              <div className="mt-7 space-y-6">
+                <PendingStep
+                  number="01"
+                  title="Complete your payment"
+                  description="Follow the payment instructions available in your Barandy account."
+                />
 
-                  <div>
-                    <p className="text-sm font-medium">
-                      Complete your payment
-                    </p>
+                <PendingStep
+                  number="02"
+                  title="Send your receipt"
+                  description="Send your payment receipt to the Barandy team for verification."
+                />
 
-                    <p className="mt-1 text-sm leading-6 text-black/50">
-                      Follow the payment instructions available
-                      in your Barandy account.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex gap-5">
-                  <span className="text-xs font-medium tracking-[0.15em] text-black/40">
-                    02
-                  </span>
-
-                  <div>
-                    <p className="text-sm font-medium">
-                      Send your receipt
-                    </p>
-
-                    <p className="mt-1 text-sm leading-6 text-black/50">
-                      Send your payment receipt to the Barandy
-                      team for verification.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex gap-5">
-                  <span className="text-xs font-medium tracking-[0.15em] text-black/40">
-                    03
-                  </span>
-
-                  <div>
-                    <p className="text-sm font-medium">
-                      Assessment unlocked
-                    </p>
-
-                    <p className="mt-1 text-sm leading-6 text-black/50">
-                      Once your payment is verified, you can
-                      begin creating your Brand DNA.
-                    </p>
-                  </div>
-                </div>
+                <PendingStep
+                  number="03"
+                  title="Assessment unlocked"
+                  description="Once verified, your personal brand assessment becomes available."
+                  last
+                />
               </div>
             </div>
 
@@ -346,9 +353,14 @@ export default function AssessmentFlow() {
                 onClick={() =>
                   router.push("/payment")
                 }
-                className="bg-[#171519] px-7 py-4 text-sm font-medium text-white transition hover:bg-black/80"
+                className="inline-flex min-h-[48px] items-center gap-3 bg-[#171519] px-7 py-4 text-sm font-medium text-white transition-all duration-300 hover:-translate-y-0.5 hover:bg-black/85"
               >
                 View Payment Instructions
+
+                <ArrowRight
+                  className="h-4 w-4"
+                  strokeWidth={1.7}
+                />
               </button>
             </div>
           </div>
@@ -625,11 +637,6 @@ export default function AssessmentFlow() {
     }
   }
 
-  /*
-   * Save the current answer.
-   *
-   * Disabled completely in review mode.
-   */
   async function saveAnswer(
     questionId: string
   ) {
@@ -661,11 +668,6 @@ export default function AssessmentFlow() {
     return data;
   }
 
-  /*
-   * Complete the assessment.
-   *
-   * Only used for a new/in-progress assessment.
-   */
   async function completeAssessment() {
     const response = await fetch(
       "/api/assessment/complete",
@@ -686,18 +688,6 @@ export default function AssessmentFlow() {
     return data;
   }
 
-  /*
-   * Move to the next question.
-   *
-   * Review mode:
-   * - no API call
-   * - simply navigate through saved answers
-   *
-   * Normal mode:
-   * - save answer
-   * - move forward
-   * - complete assessment on final step
-   */
   async function handleNext() {
     if (
       isInitializing ||
@@ -707,6 +697,7 @@ export default function AssessmentFlow() {
     }
 
     setError("");
+    setDirection("forward");
 
     /*
      * REVIEW MODE
@@ -724,23 +715,19 @@ export default function AssessmentFlow() {
         return;
       }
 
-      /*
-       * Final review step.
-       * Go to Brand DNA instead of regenerating it.
-       */
       router.push("/results");
       return;
     }
 
     /*
-     * NORMAL ASSESSMENT MODE
+     * NORMAL MODE
      */
     setIsSubmitting(true);
 
     try {
       if (!isCurrentStepValid()) {
         setError(
-          "Please complete this section before continuing."
+          getValidationMessage()
         );
 
         return;
@@ -779,6 +766,34 @@ export default function AssessmentFlow() {
     }
   }
 
+  function getValidationMessage() {
+    switch (currentQuestion.id) {
+      case "identity":
+        return "Add your name to continue.";
+
+      case "values":
+        return "Choose exactly 3 values that represent you.";
+
+      case "archetypes":
+        return "Choose one primary and one secondary archetype.";
+
+      case "purpose":
+        return "Take a moment to describe your purpose.";
+
+      case "vision":
+        return "Describe the professional future you want to build.";
+
+      case "ikigai":
+        return "Complete the four required Ikigai dimensions.";
+
+      case "voice":
+        return "Choose at least one quality for your brand voice.";
+
+      default:
+        return "Please complete this section before continuing.";
+    }
+  }
+
   function handleBack() {
     if (
       isInitializing ||
@@ -788,6 +803,7 @@ export default function AssessmentFlow() {
     }
 
     setError("");
+    setDirection("back");
 
     if (draft.step === 0) {
       return;
@@ -801,21 +817,33 @@ export default function AssessmentFlow() {
 
   function renderQuestion() {
     switch (currentQuestion.type) {
+      /*
+       * =====================================================
+       * IDENTITY
+       * =====================================================
+       */
       case "text":
         return (
-          <div className="space-y-6">
-            <div>
-              <label
-                htmlFor="personName"
-                className="mb-3 block text-sm font-medium"
-              >
-                Your name
-              </label>
+          <div className="max-w-2xl">
+            <label
+              htmlFor="personName"
+              className="mb-4 block text-xs font-semibold uppercase tracking-[0.18em] text-black/40"
+            >
+              Your name
+            </label>
 
+            <div
+              className={`border-b-2 transition-colors ${
+                isReviewMode
+                  ? "border-black/10"
+                  : "border-black/15 focus-within:border-[#171519]"
+              }`}
+            >
               <input
                 id="personName"
                 type="text"
                 autoComplete="name"
+                autoFocus
                 value={draft.personName}
                 readOnly={isReviewMode}
                 onChange={(event) =>
@@ -825,38 +853,56 @@ export default function AssessmentFlow() {
                   })
                 }
                 placeholder="Your full name"
-                className={`w-full border-b px-0 py-4 text-xl outline-none transition md:text-2xl ${
-                  isReviewMode
-                    ? "cursor-default border-black/10 bg-transparent text-black/70"
-                    : "border-black/20 bg-transparent focus:border-black"
-                }`}
+                className="w-full bg-transparent px-0 py-5 text-2xl font-medium tracking-tight outline-none placeholder:text-black/20 md:text-3xl"
+              />
+            </div>
+
+            <div className="mt-5 flex items-start gap-3">
+              <Sparkles
+                className="mt-0.5 h-4 w-4 shrink-0 text-[#8B7653]"
+                strokeWidth={1.5}
               />
 
-              <p className="mt-3 text-xs text-black/40">
-                This will be used to personalize your
-                Brand DNA.
+              <p className="max-w-lg text-xs leading-5 text-black/40">
+                We'll use your name to make your Brand DNA
+                feel personal from the first page to the last.
               </p>
             </div>
           </div>
         );
 
+      /*
+       * =====================================================
+       * VALUES
+       * =====================================================
+       */
       case "values":
         return (
           <div>
-            <div className="mb-6 flex items-center justify-between">
-              <p className="text-sm text-black/50">
-                {isReviewMode
-                  ? "Your selected values."
-                  : "Select exactly 3 values."}
-              </p>
+            <div className="mb-7 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-sm text-black/50">
+                  Which three values should guide your brand?
+                </p>
 
-              <p className="text-xs font-medium uppercase tracking-[0.15em] text-black/40">
-                {draft.selectedValues.length} / 3 selected
-              </p>
+                {!isReviewMode && (
+                  <p className="mt-1 text-xs text-black/30">
+                    Trust your instinct. Choose the ones that
+                    feel most like you.
+                  </p>
+                )}
+              </div>
+
+              <SelectionCounter
+                current={
+                  draft.selectedValues.length
+                }
+                total={3}
+              />
             </div>
 
-            <div className="grid gap-4 md:grid-cols-3">
-              {VALUE_OPTIONS.map((value) => {
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {VALUE_OPTIONS.map((value, index) => {
                 const selected =
                   draft.selectedValues.includes(
                     value.id
@@ -878,292 +924,289 @@ export default function AssessmentFlow() {
                       isReviewMode
                     }
                     aria-pressed={selected}
-                    className={`min-h-40 border p-6 text-left transition ${
+                    className={`group relative min-h-[180px] border p-6 text-left transition-all duration-300 ${
                       selected
-                        ? "border-[#171519] bg-[#171519] text-white"
+                        ? "border-[#171519] bg-[#171519] text-white shadow-[0_12px_30px_rgba(23,21,25,0.08)]"
                         : disabled ||
                             isReviewMode
-                          ? "cursor-default border-black/10 bg-black/[0.02] opacity-60"
-                          : "border-black/15 bg-white hover:border-black"
+                          ? "cursor-default border-black/8 bg-black/[0.015] opacity-45"
+                          : "border-black/10 bg-white hover:-translate-y-0.5 hover:border-black/30 hover:shadow-[0_12px_30px_rgba(23,21,25,0.05)]"
                     }`}
                   >
-                    <div
-                      className={`mb-4 text-[10px] font-medium tracking-[0.2em] ${
-                        selected
-                          ? "text-white/50"
-                          : "text-black/40"
-                      }`}
-                    >
-                      {selected
-                        ? "SELECTED"
-                        : "VALUE"}
+                    <div className="flex items-start justify-between gap-4">
+                      <span
+                        className={`text-[10px] font-semibold uppercase tracking-[0.2em] ${
+                          selected
+                            ? "text-white/40"
+                            : "text-black/30"
+                        }`}
+                      >
+                        0{index + 1}
+                      </span>
+
+                      <span
+                        className={`flex h-6 w-6 items-center justify-center rounded-full border transition-all ${
+                          selected
+                            ? "border-white/30 bg-white text-[#171519]"
+                            : "border-black/10 bg-transparent"
+                        }`}
+                      >
+                        {selected && (
+                          <Check
+                            className="h-3 w-3"
+                            strokeWidth={2.2}
+                          />
+                        )}
+                      </span>
                     </div>
 
-                    <h3 className="text-lg font-semibold">
+                    <h3 className="mt-9 text-lg font-semibold tracking-tight">
                       {value.name}
                     </h3>
 
                     <p
                       className={`mt-3 text-sm leading-6 ${
                         selected
-                          ? "text-white/70"
-                          : "text-black/60"
+                          ? "text-white/60"
+                          : "text-black/50"
                       }`}
                     >
                       {value.description}
                     </p>
+
+                    {selected && (
+                      <span className="absolute bottom-5 left-6 text-[9px] font-semibold uppercase tracking-[0.18em] text-[#C9A876]">
+                        Selected
+                      </span>
+                    )}
                   </button>
                 );
               })}
             </div>
+
+            {!isReviewMode &&
+              draft.selectedValues.length === 3 && (
+                <div className="mt-6 flex items-center gap-2 text-xs text-black/40">
+                  <CheckCircle2
+                    className="h-4 w-4 text-[#8B7653]"
+                    strokeWidth={1.6}
+                  />
+
+                  Your three values are locked in.
+                </div>
+              )}
           </div>
         );
 
+      /*
+       * =====================================================
+       * ARCHETYPES
+       * =====================================================
+       */
       case "archetypes":
         return (
-          <div className="space-y-12">
-            <div>
-              <div className="mb-5 flex items-end justify-between gap-4">
-                <div>
-                  <p className="text-xs font-medium uppercase tracking-[0.2em]">
-                    Primary archetype
-                  </p>
-
-                  <p className="mt-2 text-sm text-black/45">
-                    Choose the archetype that best represents
-                    your core identity.
-                  </p>
-                </div>
-
-                {draft.primaryArchetypeId && (
-                  <span className="shrink-0 text-xs uppercase tracking-[0.15em] text-black/40">
-                    Selected
-                  </span>
-                )}
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-2">
-                {ARCHETYPE_OPTIONS.map(
-                  (archetype) => {
-                    const selected =
-                      draft.primaryArchetypeId ===
-                      archetype.id;
-
-                    return (
-                      <button
-                        key={archetype.id}
-                        type="button"
-                        onClick={() =>
-                          selectArchetype(
-                            archetype.id
-                          )
-                        }
-                        disabled={isReviewMode}
-                        aria-pressed={selected}
-                        className={`border p-6 text-left transition ${
-                          selected
-                            ? "border-[#171519] bg-[#171519] text-white"
-                            : isReviewMode
-                              ? "cursor-default border-black/10 bg-black/[0.02] opacity-60"
-                              : "border-black/15 bg-white hover:border-black"
-                        }`}
-                      >
-                        <div className="flex items-start justify-between gap-4">
-                          <div>
-                            <h3 className="text-lg font-semibold">
-                              {archetype.title}
-                            </h3>
-
-                            <p
-                              className={`mt-1 text-sm ${
-                                selected
-                                  ? "text-white/60"
-                                  : "text-black/50"
-                              }`}
-                            >
-                              {archetype.subtitle}
-                            </p>
-                          </div>
-
-                          {selected && (
-                            <span className="text-xs tracking-[0.15em]">
-                              ✓
-                            </span>
-                          )}
-                        </div>
-
-                        <p
-                          className={`mt-4 text-sm leading-6 ${
-                            selected
-                              ? "text-white/75"
-                              : "text-black/60"
-                          }`}
-                        >
-                          {archetype.description}
-                        </p>
-                      </button>
-                    );
-                  }
-                )}
-              </div>
-            </div>
-
-            <div>
-              <div className="mb-5">
-                <p className="text-xs font-medium uppercase tracking-[0.2em]">
-                  Secondary archetype
-                </p>
-
-                <p className="mt-2 text-sm text-black/45">
-                  Choose a complementary archetype that
-                  strengthens your identity.
-                </p>
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-2">
-                {ARCHETYPE_OPTIONS.map(
-                  (archetype) => {
-                    const selected =
-                      draft.secondaryArchetypeId ===
-                      archetype.id;
-
-                    const disabled =
-                      draft.primaryArchetypeId ===
-                      archetype.id;
-
-                    return (
-                      <button
-                        key={archetype.id}
-                        type="button"
-                        disabled={
-                          disabled ||
-                          isReviewMode
-                        }
-                        onClick={() =>
-                          selectSecondaryArchetype(
-                            archetype.id
-                          )
-                        }
-                        aria-pressed={selected}
-                        className={`border p-6 text-left transition ${
-                          selected
-                            ? "border-[#171519] bg-[#171519] text-white"
-                            : disabled ||
-                                isReviewMode
-                              ? "cursor-default border-black/10 bg-black/[0.02] opacity-50"
-                              : "border-black/15 bg-white hover:border-black"
-                        }`}
-                      >
-                        <div className="flex items-start justify-between gap-4">
-                          <div>
-                            <h3 className="text-lg font-semibold">
-                              {archetype.title}
-                            </h3>
-
-                            <p
-                              className={`mt-1 text-sm ${
-                                selected
-                                  ? "text-white/60"
-                                  : "text-black/50"
-                              }`}
-                            >
-                              {archetype.subtitle}
-                            </p>
-                          </div>
-
-                          {selected && (
-                            <span className="text-xs tracking-[0.15em]">
-                              ✓
-                            </span>
-                          )}
-                        </div>
-                      </button>
-                    );
-                  }
-                )}
-              </div>
-            </div>
-          </div>
-        );
-
-      case "textarea":
-        return (
-          <div>
-            <textarea
-              value={
-                currentQuestion.id ===
-                "purpose"
-                  ? draft.purpose
-                  : draft.vision
+          <div className="space-y-14">
+            <ArchetypeGroup
+              title="Your primary archetype"
+              description="The energy that most strongly represents who you are."
+              options={ARCHETYPE_OPTIONS}
+              selectedId={
+                draft.primaryArchetypeId
               }
-              readOnly={isReviewMode}
-              onChange={(event) =>
-                updateDraft({
-                  [currentQuestion.id]:
-                    event.target.value,
-                } as Partial<AssessmentDraft>)
-              }
-              placeholder={
-                currentQuestion.id ===
-                "purpose"
-                  ? "Write your purpose..."
-                  : "Describe the professional future you want to build..."
-              }
-              rows={8}
-              className={`w-full resize-none border p-6 text-base leading-8 outline-none transition md:text-lg ${
-                isReviewMode
-                  ? "cursor-default border-black/10 bg-black/[0.02] text-black/70"
-                  : "border-black/15 bg-white focus:border-black"
-              }`}
+              onSelect={selectArchetype}
+              disabled={isReviewMode}
+              variant="primary"
             />
 
-            <p className="mt-3 text-xs text-black/40">
-              {isReviewMode
-                ? "This is a saved response from your completed assessment."
-                : "Take your time. There is no right or wrong answer."}
-            </p>
+            <ArchetypeGroup
+              title="Your secondary archetype"
+              description="A complementary energy that adds nuance to your identity."
+              options={ARCHETYPE_OPTIONS}
+              selectedId={
+                draft.secondaryArchetypeId
+              }
+              onSelect={
+                selectSecondaryArchetype
+              }
+              disabled={isReviewMode}
+              excludedId={
+                draft.primaryArchetypeId
+              }
+              variant="secondary"
+            />
+
+            {!isReviewMode &&
+              draft.primaryArchetypeId &&
+              draft.secondaryArchetypeId && (
+                <div className="border border-[#8B7653]/20 bg-[#8B7653]/5 p-5">
+                  <div className="flex items-start gap-3">
+                    <Sparkles
+                      className="mt-0.5 h-4 w-4 shrink-0 text-[#8B7653]"
+                      strokeWidth={1.6}
+                    />
+
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.15em] text-[#8B7653]">
+                        Identity mapped
+                      </p>
+
+                      <p className="mt-1 text-sm leading-6 text-black/50">
+                        Your primary and secondary archetypes
+                        now give us two dimensions of your
+                        brand personality.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
           </div>
         );
 
+      /*
+       * =====================================================
+       * PURPOSE / VISION
+       * =====================================================
+       */
+      case "textarea":
+        return (
+          <div className="max-w-3xl">
+            <div
+              className={`relative border transition-all duration-300 ${
+                isReviewMode
+                  ? "border-black/10 bg-black/[0.02]"
+                  : "border-black/10 bg-white focus-within:border-black/30 focus-within:shadow-[0_15px_40px_rgba(23,21,25,0.04)]"
+              }`}
+            >
+              <textarea
+                autoFocus
+                value={
+                  currentQuestion.id ===
+                  "purpose"
+                    ? draft.purpose
+                    : draft.vision
+                }
+                readOnly={isReviewMode}
+                onChange={(event) =>
+                  updateDraft({
+                    [currentQuestion.id]:
+                      event.target.value,
+                  } as Partial<AssessmentDraft>)
+                }
+                placeholder={
+                  currentQuestion.id ===
+                  "purpose"
+                    ? "Write freely. What drives the work you want to be known for?"
+                    : "Imagine your professional future. What are you building toward?"
+                }
+                rows={9}
+                className="w-full resize-none bg-transparent p-6 text-base leading-8 outline-none placeholder:text-black/25 md:p-8 md:text-lg"
+              />
+
+              <div className="flex items-center justify-between border-t border-black/8 px-6 py-3 md:px-8">
+                <span className="text-[10px] uppercase tracking-[0.15em] text-black/25">
+                  {isReviewMode
+                    ? "Saved response"
+                    : "Write in your own words"}
+                </span>
+
+                <span className="text-[10px] text-black/25">
+                  {(
+                    currentQuestion.id ===
+                    "purpose"
+                      ? draft.purpose
+                      : draft.vision
+                  ).length}{" "}
+                  characters
+                </span>
+              </div>
+            </div>
+
+            <div className="mt-5 flex items-start gap-3">
+              <span className="mt-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-[#171519] text-white">
+                <Check
+                  className="h-3 w-3"
+                  strokeWidth={2}
+                />
+              </span>
+
+              <p className="text-xs leading-5 text-black/40">
+                There is no perfect answer. Authentic answers
+                create a more accurate Brand DNA.
+              </p>
+            </div>
+          </div>
+        );
+
+      /*
+       * =====================================================
+       * IKIGAI
+       * =====================================================
+       */
       case "ikigai":
         return (
           <div>
-            <div className="mb-7">
-              <p className="text-sm text-black/50">
-                Explore the four dimensions of your Ikigai.
-                The intersection is optional.
+            <div className="mb-8 max-w-2xl">
+              <p className="text-sm leading-6 text-black/50">
+                Look at your professional life from four
+                different angles. Don't overthink it.
               </p>
             </div>
 
-            <div className="grid gap-6 md:grid-cols-2">
+            <div className="grid gap-4 md:grid-cols-2">
               {(
                 [
                   [
                     "passion",
                     "What you love",
+                    "What naturally energizes you?",
                   ],
                   [
                     "mission",
                     "What the world needs",
+                    "What change do you want to contribute to?",
                   ],
                   [
                     "vocation",
                     "What you are good at",
+                    "Where do your natural strengths show up?",
                   ],
                   [
                     "profession",
                     "What you can build a career around",
+                    "What can create real professional value?",
                   ],
                 ] as const
               ).map(
-                ([key, label]) => (
-                  <div key={key}>
-                    <label
-                      htmlFor={`ikigai-${key}`}
-                      className="mb-3 block text-sm font-medium"
-                    >
-                      {label}
-                    </label>
+                ([key, label, helper], index) => (
+                  <div
+                    key={key}
+                    className="border border-black/10 bg-white p-5 transition-colors focus-within:border-black/25 md:p-6"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#8B7653]">
+                          0{index + 1}
+                        </span>
+
+                        <label
+                          htmlFor={`ikigai-${key}`}
+                          className="mt-2 block text-sm font-semibold"
+                        >
+                          {label}
+                        </label>
+                      </div>
+
+                      {draft.ikigai[key].trim() && (
+                        <CheckCircle2
+                          className="h-4 w-4 text-[#8B7653]"
+                          strokeWidth={1.6}
+                        />
+                      )}
+                    </div>
+
+                    <p className="mt-2 text-xs leading-5 text-black/35">
+                      {helper}
+                    </p>
 
                     <textarea
                       id={`ikigai-${key}`}
@@ -1178,27 +1221,42 @@ export default function AssessmentFlow() {
                         )
                       }
                       rows={5}
-                      className={`w-full resize-none border p-4 leading-7 outline-none transition ${
+                      className={`mt-5 w-full resize-none border-0 border-t border-black/8 bg-transparent px-0 pt-4 text-sm leading-7 outline-none ${
                         isReviewMode
-                          ? "cursor-default border-black/10 bg-black/[0.02] text-black/70"
-                          : "border-black/15 bg-white focus:border-black"
+                          ? "cursor-default text-black/65"
+                          : "placeholder:text-black/20"
                       }`}
                     />
                   </div>
                 )
               )}
 
-              <div className="md:col-span-2">
-                <label
-                  htmlFor="ikigai-intersection"
-                  className="mb-3 block text-sm font-medium"
-                >
-                  Your intersection
+              <div className="border border-black/10 bg-white p-5 md:col-span-2 md:p-6">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#8B7653]">
+                      Optional
+                    </span>
 
-                  <span className="ml-2 text-black/40">
-                    Optional
-                  </span>
-                </label>
+                    <label
+                      htmlFor="ikigai-intersection"
+                      className="mt-2 block text-sm font-semibold"
+                    >
+                      Your intersection
+                    </label>
+
+                    <p className="mt-2 text-xs leading-5 text-black/35">
+                      Where do these four dimensions meet?
+                    </p>
+                  </div>
+
+                  {draft.ikigai.intersection?.trim() && (
+                    <CheckCircle2
+                      className="h-4 w-4 text-[#8B7653]"
+                      strokeWidth={1.6}
+                    />
+                  )}
+                </div>
 
                 <textarea
                   id="ikigai-intersection"
@@ -1214,11 +1272,11 @@ export default function AssessmentFlow() {
                     )
                   }
                   rows={4}
-                  placeholder="Where do these four dimensions meet?"
-                  className={`w-full resize-none border p-4 leading-7 outline-none transition ${
+                  placeholder="Describe the space where your passion, strengths, contribution and career intersect."
+                  className={`mt-5 w-full resize-none border border-black/8 bg-[#F8F5F1] p-4 text-sm leading-7 outline-none transition focus:border-black/25 ${
                     isReviewMode
-                      ? "cursor-default border-black/10 bg-black/[0.02] text-black/70"
-                      : "border-black/15 bg-white focus:border-black"
+                      ? "cursor-default text-black/65"
+                      : "placeholder:text-black/20"
                   }`}
                 />
               </div>
@@ -1226,15 +1284,23 @@ export default function AssessmentFlow() {
           </div>
         );
 
+      /*
+       * =====================================================
+       * PERCEPTION
+       * =====================================================
+       */
       case "perception":
         return (
           <div>
-            <p className="mb-10 text-sm leading-6 text-black/50">
-              There are no right answers. Move each slider
-              toward the side that feels more natural to you.
-            </p>
+            <div className="mb-10 max-w-2xl">
+              <p className="text-sm leading-6 text-black/50">
+                Move each scale toward the side that feels
+                more natural to you. Think instinctively rather
+                than strategically.
+              </p>
+            </div>
 
-            <div className="space-y-12">
+            <div className="space-y-10">
               {PERCEPTION_DIMENSIONS.map(
                 (dimension) => {
                   const key =
@@ -1244,123 +1310,161 @@ export default function AssessmentFlow() {
                     draft.perception[key];
 
                   return (
-                    <div
+                    <PerceptionSlider
                       key={dimension.id}
-                    >
-                      <div className="mb-5 flex items-center justify-between gap-6 text-sm">
-                        <span className="max-w-[40%] font-medium">
-                          {dimension.leftLabel}
-                        </span>
-
-                        <span className="text-xs font-medium uppercase tracking-[0.15em] text-black/35">
-                          {value}
-                        </span>
-
-                        <span className="max-w-[40%] text-right font-medium">
-                          {dimension.rightLabel}
-                        </span>
-                      </div>
-
-                      <input
-                        type="range"
-                        min="0"
-                        max="100"
-                        value={value}
-                        disabled={isReviewMode}
-                        onChange={(event) =>
-                          updatePerception(
-                            key,
-                            Number(
-                              event.target
-                                .value
-                            )
-                          )
-                        }
-                        aria-label={`${dimension.leftLabel} versus ${dimension.rightLabel}`}
-                        className={`w-full ${
-                          isReviewMode
-                            ? "cursor-default opacity-70"
-                            : "cursor-pointer accent-[#171519]"
-                        }`}
-                      />
-
-                      <div className="mt-3 flex justify-between text-[10px] uppercase tracking-[0.15em] text-black/30">
-                        <span>
-                          {dimension.leftLabel}
-                        </span>
-
-                        <span>
-                          {dimension.rightLabel}
-                        </span>
-                      </div>
-                    </div>
+                      leftLabel={
+                        dimension.leftLabel
+                      }
+                      rightLabel={
+                        dimension.rightLabel
+                      }
+                      value={value}
+                      disabled={isReviewMode}
+                      onChange={(nextValue) =>
+                        updatePerception(
+                          key,
+                          nextValue
+                        )
+                      }
+                    />
                   );
                 }
               )}
             </div>
+
+            <div className="mt-10 border border-black/10 bg-white p-5">
+              <div className="flex items-center gap-3">
+                <Compass
+                  className="h-4 w-4 text-[#8B7653]"
+                  strokeWidth={1.5}
+                />
+
+                <p className="text-xs leading-5 text-black/40">
+                  Your answers create a unique positioning
+                  profile. There is no ideal score.
+                </p>
+              </div>
+            </div>
           </div>
         );
 
+      /*
+       * =====================================================
+       * VOICE
+       * =====================================================
+       */
       case "voice":
         return (
           <div>
-            <div className="mb-6 flex items-center justify-between gap-4">
-              <p className="text-sm text-black/50">
-                {isReviewMode
-                  ? "Your selected voice qualities."
-                  : "Select the qualities you want your voice to communicate."}
-              </p>
+            <div className="mb-7 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-sm text-black/50">
+                  Choose the qualities your voice should
+                  communicate.
+                </p>
 
-              <p className="shrink-0 text-xs font-medium uppercase tracking-[0.15em] text-black/40">
-                {draft.selectedTones.length} / 4
-              </p>
+                {!isReviewMode && (
+                  <p className="mt-1 text-xs text-black/30">
+                    Pick up to four. Think about how you want
+                    people to experience your communication.
+                  </p>
+                )}
+              </div>
+
+              <SelectionCounter
+                current={
+                  draft.selectedTones.length
+                }
+                total={4}
+              />
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-4">
-              {VOICE_TONES.map((tone) => {
-                const selected =
-                  draft.selectedTones.includes(
-                    tone
-                  );
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {VOICE_TONES.map(
+                (tone, index) => {
+                  const selected =
+                    draft.selectedTones.includes(
+                      tone
+                    );
 
-                const disabled =
-                  !selected &&
-                  draft.selectedTones.length >= 4;
+                  const disabled =
+                    !selected &&
+                    draft.selectedTones.length >= 4;
 
-                return (
-                  <button
-                    key={tone}
-                    type="button"
-                    onClick={() =>
-                      toggleTone(tone)
-                    }
-                    disabled={
-                      disabled ||
-                      isReviewMode
-                    }
-                    aria-pressed={selected}
-                    className={`border px-5 py-4 text-sm transition ${
-                      selected
-                        ? "border-[#171519] bg-[#171519] text-white"
-                        : disabled ||
-                            isReviewMode
-                          ? "cursor-default border-black/10 bg-black/[0.02] opacity-50"
-                          : "border-black/15 bg-white hover:border-black"
-                    }`}
-                  >
-                    <span className="flex items-center justify-between gap-3">
-                      {tone}
+                  return (
+                    <button
+                      key={tone}
+                      type="button"
+                      onClick={() =>
+                        toggleTone(tone)
+                      }
+                      disabled={
+                        disabled ||
+                        isReviewMode
+                      }
+                      aria-pressed={selected}
+                      className={`group relative min-h-[120px] border p-5 text-left transition-all duration-300 ${
+                        selected
+                          ? "border-[#171519] bg-[#171519] text-white"
+                          : disabled ||
+                              isReviewMode
+                            ? "cursor-default border-black/8 bg-black/[0.02] opacity-45"
+                            : "border-black/10 bg-white hover:-translate-y-0.5 hover:border-black/30"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between">
+                        <span
+                          className={`text-[10px] font-semibold uppercase tracking-[0.18em] ${
+                            selected
+                              ? "text-white/35"
+                              : "text-black/25"
+                          }`}
+                        >
+                          0{index + 1}
+                        </span>
+
+                        <span
+                          className={`flex h-5 w-5 items-center justify-center rounded-full border ${
+                            selected
+                              ? "border-white/30 bg-white text-[#171519]"
+                              : "border-black/10"
+                          }`}
+                        >
+                          {selected && (
+                            <Check
+                              className="h-2.5 w-2.5"
+                              strokeWidth={2.2}
+                            />
+                          )}
+                        </span>
+                      </div>
+
+                      <p className="mt-8 text-sm font-semibold">
+                        {tone}
+                      </p>
 
                       {selected && (
-                        <span className="text-xs">
-                          ✓
+                        <span className="absolute bottom-4 left-5 text-[9px] uppercase tracking-[0.16em] text-[#C9A876]">
+                          Selected
                         </span>
                       )}
-                    </span>
-                  </button>
-                );
-              })}
+                    </button>
+                  );
+                }
+              )}
             </div>
+
+            {!isReviewMode &&
+              draft.selectedTones.length > 0 && (
+                <div className="mt-6 flex items-center gap-2 text-xs text-black/40">
+                  <Sparkles
+                    className="h-4 w-4 text-[#8B7653]"
+                    strokeWidth={1.5}
+                  />
+
+                  Your voice is starting to take shape.
+                </div>
+              )}
           </div>
         );
 
@@ -1369,12 +1473,6 @@ export default function AssessmentFlow() {
     }
   }
 
-  const isLastStep =
-    draft.step === TOTAL_STEPS - 1;
-
-  const isFirstStep =
-    draft.step === 0;
-
   return (
     <main className="min-h-screen bg-[#F8F5F1] text-[#171519]">
       <ClientHeader
@@ -1382,131 +1480,185 @@ export default function AssessmentFlow() {
         showBack
       />
 
-      <div className="mx-auto max-w-6xl px-6 py-10 md:px-10 md:py-14">
-        {/* Assessment meta */}
-        <div className="mb-10 flex items-end justify-between gap-6">
-          <div>
-            <p className="text-xs font-medium uppercase tracking-[0.25em] text-black/40">
-              {isReviewMode
-                ? "Assessment Review"
-                : "Your Brand DNA"}
-            </p>
+      <div className="mx-auto max-w-6xl px-5 pb-20 pt-8 sm:px-6 md:px-10 md:pt-12 lg:px-12">
+        {/* =====================================================
+            TOP ASSESSMENT BAR
+        ====================================================== */}
+        <div className="mb-10 md:mb-14">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <div className="flex items-center gap-3">
+                <span className="h-px w-7 bg-[#8B7653]" />
 
-            <p className="mt-2 text-sm text-black/45">
-              {isReviewMode
-                ? "Review the answers you submitted."
-                : "Your answers are saved as you continue."}
-            </p>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#8B7653]">
+                  {isReviewMode
+                    ? "Assessment Review"
+                    : "Brand Discovery"}
+                </p>
+              </div>
+
+              <p className="mt-3 text-xs text-black/35">
+                {isReviewMode
+                  ? "Reviewing your saved answers"
+                  : "Your answers are saved automatically"}
+              </p>
+            </div>
+
+            <div className="flex items-center gap-4 sm:text-right">
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-black/30">
+                  Progress
+                </p>
+
+                <p className="mt-1 text-sm font-medium">
+                  {progress}% complete
+                </p>
+              </div>
+
+              <div className="h-8 w-px bg-black/10" />
+
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-black/30">
+                  Step
+                </p>
+
+                <p className="mt-1 text-sm font-medium">
+                  {String(draft.step + 1).padStart(
+                    2,
+                    "0"
+                  )}{" "}
+                  <span className="text-black/25">
+                    / {String(TOTAL_STEPS).padStart(
+                      2,
+                      "0"
+                    )}
+                  </span>
+                </p>
+              </div>
+            </div>
           </div>
 
-          <div className="text-right">
-            <p className="text-xs uppercase tracking-[0.2em] text-black/40">
-              Step
-            </p>
+          {/* Progress bar */}
+          <div className="mt-7">
+            <div className="h-[3px] bg-black/8">
+              <div
+                className="h-full bg-[#171519] transition-all duration-700 ease-out"
+                style={{
+                  width: `${Math.max(
+                    progress,
+                    3
+                  )}%`,
+                }}
+              />
+            </div>
 
-            <p className="mt-1 text-lg font-semibold">
-              {String(draft.step + 1).padStart(
-                2,
-                "0"
-              )}{" "}
-              <span className="font-normal text-black/35">
-                / {String(TOTAL_STEPS).padStart(2, "0")}
-              </span>
-            </p>
+            <div className="mt-3 flex items-center justify-between">
+              <p className="text-[10px] uppercase tracking-[0.15em] text-black/25">
+                {stageLabel}
+              </p>
+
+              <p className="text-[10px] text-black/25">
+                {isLastStep
+                  ? "Final step"
+                  : `${remainingSteps} ${
+                      remainingSteps === 1
+                        ? "step"
+                        : "steps"
+                    } remaining`}
+              </p>
+            </div>
           </div>
         </div>
 
-        {/* Review mode notice */}
+        {/* =====================================================
+            REVIEW NOTICE
+        ====================================================== */}
         {isReviewMode && (
-          <div className="mb-10 border border-black/10 bg-white px-5 py-4">
+          <div className="mb-10 border border-[#8B7653]/20 bg-[#8B7653]/5 px-5 py-4">
             <div className="flex items-start gap-4">
-              <span className="text-xs font-semibold">
-                ✓
-              </span>
+              <CheckCircle2
+                className="mt-0.5 h-4 w-4 shrink-0 text-[#8B7653]"
+                strokeWidth={1.7}
+              />
 
               <div>
-                <p className="text-xs font-medium uppercase tracking-[0.18em] text-black/45">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#8B7653]">
                   Completed assessment
                 </p>
 
-                <p className="mt-2 text-sm leading-6 text-black/55">
-                  Your assessment has already been completed.
-                  You are viewing your saved answers in review
-                  mode.
+                <p className="mt-1 text-xs leading-5 text-black/45">
+                  Your answers are safely stored. You are
+                  viewing them in read-only mode.
                 </p>
               </div>
             </div>
           </div>
         )}
 
-        {/* Progress */}
-        <div className="mb-16">
-          <div className="mb-3 flex items-center justify-between text-xs text-black/40">
-            <span>
-              {progress}% complete
-            </span>
-
-            <span>
-              {isLastStep
-                ? "Final step"
-                : `${TOTAL_STEPS - draft.step - 1} ${
-                    TOTAL_STEPS - draft.step - 1 === 1
-                      ? "step"
-                      : "steps"
-                  } remaining`}
-            </span>
-          </div>
-
-          <div className="h-[2px] bg-black/10">
-            <div
-              className="h-full bg-[#171519] transition-all duration-500 ease-out"
-              style={{
-                width: `${progress}%`,
-              }}
-            />
-          </div>
-        </div>
-
-        {/* Question */}
+        {/* =====================================================
+            QUESTION AREA
+        ====================================================== */}
         <section className="mx-auto max-w-5xl">
-          <div className="mb-12 max-w-3xl">
-            <p className="mb-5 text-xs font-medium uppercase tracking-[0.25em] text-black/35">
-              {String(
-                draft.step + 1
-              ).padStart(2, "0")}
-            </p>
+          <div
+            key={draft.step}
+            className={`transition-all duration-300 ${
+              direction === "forward"
+                ? "animate-[assessmentIn_0.35s_ease-out]"
+                : "animate-[assessmentBack_0.35s_ease-out]"
+            }`}
+          >
+            {/* Question heading */}
+            <div className="mb-10 max-w-4xl md:mb-14">
+              <div className="mb-5 flex items-center gap-3">
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#171519] text-[9px] font-semibold text-white">
+                  {String(
+                    draft.step + 1
+                  ).padStart(2, "0")}
+                </span>
 
-            <h1 className="text-4xl font-semibold leading-[1.08] tracking-tight md:text-6xl">
-              {currentQuestion.title}
-            </h1>
+                <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-black/30">
+                  {stageLabel}
+                </span>
+              </div>
 
-            {currentQuestion.description && (
-              <p className="mt-7 max-w-2xl text-base leading-8 text-black/55 md:text-lg">
-                {currentQuestion.description}
-              </p>
-            )}
+              <h1 className="max-w-4xl text-[2.35rem] font-medium leading-[1.02] tracking-[-0.035em] sm:text-4xl md:text-5xl lg:text-[4rem]">
+                {currentQuestion.title}
+              </h1>
+
+              {currentQuestion.description && (
+                <p className="mt-6 max-w-2xl text-sm leading-7 text-black/50 md:text-base md:leading-8">
+                  {currentQuestion.description}
+                </p>
+              )}
+            </div>
+
+            {/* Question content */}
+            <div className="min-h-[360px]">
+              {renderQuestion()}
+            </div>
           </div>
 
-          {/* Question content */}
-          <div className="min-h-[320px]">
-            {renderQuestion()}
-          </div>
-
-          {/* Error */}
+          {/* ===================================================
+              ERROR
+          ==================================================== */}
           {error && (
-            <div className="mt-10 flex items-start gap-4 border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700">
-              <span className="mt-0.5 font-medium">
-                !
-              </span>
+            <div className="mt-10 border border-red-200 bg-red-50 px-5 py-4">
+              <div className="flex items-start gap-3">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-red-600 text-[10px] font-bold text-white">
+                  !
+                </span>
 
-              <p className="leading-6">
-                {error}
-              </p>
+                <p className="text-xs leading-5 text-red-700">
+                  {error}
+                </p>
+              </div>
             </div>
           )}
 
-          {/* Navigation */}
-          <div className="mt-16 border-t border-black/10 pt-8">
+          {/* ===================================================
+              NAVIGATION
+          ==================================================== */}
+          <div className="mt-14 border-t border-black/10 pt-7 md:mt-20 md:pt-8">
             <div className="flex flex-col-reverse gap-5 sm:flex-row sm:items-center sm:justify-between">
               <button
                 type="button"
@@ -1515,46 +1667,390 @@ export default function AssessmentFlow() {
                   isFirstStep ||
                   isSubmitting
                 }
-                className="py-3 text-left text-sm font-medium text-black/50 transition hover:text-black disabled:cursor-not-allowed disabled:opacity-20"
+                className="group inline-flex min-h-[44px] items-center gap-2 text-sm font-medium text-black/40 transition-colors hover:text-black disabled:cursor-not-allowed disabled:opacity-20"
               >
-                ← Previous
+                <ArrowLeft
+                  className="h-4 w-4 transition-transform group-hover:-translate-x-1"
+                  strokeWidth={1.7}
+                />
+
+                Previous
               </button>
 
               <button
                 type="button"
                 onClick={handleNext}
                 disabled={isSubmitting}
-                className="w-full bg-[#171519] px-8 py-4 text-sm font-medium text-white transition hover:bg-black/80 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:min-w-[220px]"
+                className="group inline-flex min-h-[50px] w-full items-center justify-center gap-3 bg-[#171519] px-8 py-4 text-sm font-medium text-white transition-all duration-300 hover:-translate-y-0.5 hover:bg-black/90 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:min-w-[230px]"
               >
                 {isReviewMode
                   ? isLastStep
-                    ? "View My Brand DNA →"
-                    : "Next →"
+                    ? "View My Brand DNA"
+                    : "Next"
                   : isSubmitting
                     ? isLastStep
-                      ? "Generating..."
-                      : "Saving..."
+                      ? "Creating your profile..."
+                      : "Saving your answer..."
                     : isLastStep
                       ? "Generate My Brand DNA"
-                      : "Continue →"}
+                      : "Continue"}
+
+                {!isSubmitting && (
+                  <ArrowRight
+                    className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1"
+                    strokeWidth={1.7}
+                  />
+                )}
               </button>
             </div>
 
-            <div className="mt-5 flex items-center justify-between gap-4 text-[10px] uppercase tracking-[0.15em] text-black/30">
+            <div className="mt-6 flex flex-col gap-2 text-[9px] uppercase tracking-[0.14em] text-black/25 sm:flex-row sm:items-center sm:justify-between">
               <span>
                 {isReviewMode
-                  ? "Reviewing your saved assessment"
+                  ? "Reviewing saved answers"
                   : "Your progress is saved automatically"}
               </span>
 
-              <span className="hidden sm:block">
-                Barandy Personal Brand Intelligence
+              <span>
+                Barandy · Personal Brand Intelligence
               </span>
             </div>
           </div>
         </section>
       </div>
+
+      {/* =====================================================
+          LOCAL ANIMATION KEYFRAMES
+      ====================================================== */}
+      <style jsx global>{`
+        @keyframes assessmentIn {
+          from {
+            opacity: 0;
+            transform: translateX(12px);
+          }
+
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+
+        @keyframes assessmentBack {
+          from {
+            opacity: 0;
+            transform: translateX(-12px);
+          }
+
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+      `}</style>
     </main>
+  );
+}
+
+/* ============================================================
+   PENDING STEP
+============================================================ */
+
+function PendingStep({
+  number,
+  title,
+  description,
+  last = false,
+}: {
+  number: string;
+  title: string;
+  description: string;
+  last?: boolean;
+}) {
+  return (
+    <div className="relative flex gap-5">
+      {!last && (
+        <div
+          className="absolute left-[15px] top-8 h-[calc(100%+16px)] w-px bg-black/8"
+          aria-hidden="true"
+        />
+      )}
+
+      <span className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-black/10 bg-[#F8F5F1] text-[10px] font-semibold">
+        {number}
+      </span>
+
+      <div className="pb-1">
+        <p className="text-sm font-semibold">
+          {title}
+        </p>
+
+        <p className="mt-1 text-sm leading-6 text-black/45">
+          {description}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   SELECTION COUNTER
+============================================================ */
+
+function SelectionCounter({
+  current,
+  total,
+}: {
+  current: number;
+  total: number;
+}) {
+  const complete = current === total;
+
+  return (
+    <div
+      className={`flex w-fit items-center gap-2 border px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.14em] ${
+        complete
+          ? "border-[#8B7653]/25 bg-[#8B7653]/5 text-[#8B7653]"
+          : "border-black/8 bg-white text-black/35"
+      }`}
+    >
+      {complete && (
+        <Check
+          className="h-3 w-3"
+          strokeWidth={2}
+        />
+      )}
+
+      {current} / {total}
+    </div>
+  );
+}
+
+/* ============================================================
+   ARCHETYPE GROUP
+============================================================ */
+
+function ArchetypeGroup({
+  title,
+  description,
+  options,
+  selectedId,
+  onSelect,
+  disabled,
+  excludedId,
+  variant,
+}: {
+  title: string;
+  description: string;
+  options: typeof ARCHETYPE_OPTIONS;
+  selectedId: string;
+  onSelect: (id: string) => void;
+  disabled: boolean;
+  excludedId?: string;
+  variant: "primary" | "secondary";
+}) {
+  return (
+    <div>
+      <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#8B7653]">
+            {variant === "primary"
+              ? "01 · Core identity"
+              : "02 · Supporting identity"}
+          </p>
+
+          <h2 className="mt-2 text-xl font-medium tracking-tight">
+            {title}
+          </h2>
+
+          <p className="mt-2 text-sm text-black/45">
+            {description}
+          </p>
+        </div>
+
+        {selectedId && (
+          <span className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.15em] text-black/35">
+            <CheckCircle2
+              className="h-3.5 w-3.5 text-[#8B7653]"
+              strokeWidth={1.6}
+            />
+
+            Selected
+          </span>
+        )}
+      </div>
+
+      <div className="grid gap-3 md:grid-cols-2">
+        {options.map((archetype, index) => {
+          const selected =
+            selectedId === archetype.id;
+
+          const excluded =
+            excludedId === archetype.id;
+
+          return (
+            <button
+              key={archetype.id}
+              type="button"
+              disabled={
+                disabled ||
+                excluded
+              }
+              onClick={() =>
+                onSelect(archetype.id)
+              }
+              aria-pressed={selected}
+              className={`group relative min-h-[170px] border p-6 text-left transition-all duration-300 ${
+                selected
+                  ? "border-[#171519] bg-[#171519] text-white shadow-[0_14px_35px_rgba(23,21,25,0.08)]"
+                  : disabled ||
+                      excluded
+                    ? "cursor-default border-black/8 bg-black/[0.02] opacity-45"
+                    : "border-black/10 bg-white hover:-translate-y-0.5 hover:border-black/30 hover:shadow-[0_12px_30px_rgba(23,21,25,0.05)]"
+              }`}
+            >
+              <div className="flex items-start justify-between gap-4">
+                <span
+                  className={`text-[10px] font-semibold uppercase tracking-[0.18em] ${
+                    selected
+                      ? "text-white/35"
+                      : "text-black/25"
+                  }`}
+                >
+                  {String(index + 1).padStart(
+                    2,
+                    "0"
+                  )}
+                </span>
+
+                <span
+                  className={`flex h-6 w-6 items-center justify-center rounded-full border ${
+                    selected
+                      ? "border-white/30 bg-white text-[#171519]"
+                      : "border-black/10"
+                  }`}
+                >
+                  {selected && (
+                    <Check
+                      className="h-3 w-3"
+                      strokeWidth={2.2}
+                    />
+                  )}
+                </span>
+              </div>
+
+              <h3 className="mt-7 text-lg font-semibold tracking-tight">
+                {archetype.title}
+              </h3>
+
+              <p
+                className={`mt-1 text-sm ${
+                  selected
+                    ? "text-white/55"
+                    : "text-black/45"
+                }`}
+              >
+                {archetype.subtitle}
+              </p>
+
+              <p
+                className={`mt-4 text-sm leading-6 ${
+                  selected
+                    ? "text-white/65"
+                    : "text-black/50"
+                }`}
+              >
+                {archetype.description}
+              </p>
+
+              {excluded && (
+                <span className="absolute bottom-5 right-6 text-[9px] uppercase tracking-[0.15em] text-black/25">
+                  Primary selected
+                </span>
+              )}
+
+              {selected && (
+                <span className="absolute bottom-5 left-6 text-[9px] uppercase tracking-[0.15em] text-[#C9A876]">
+                  {variant === "primary"
+                    ? "Primary"
+                    : "Secondary"}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   PERCEPTION SLIDER
+============================================================ */
+
+function PerceptionSlider({
+  leftLabel,
+  rightLabel,
+  value,
+  disabled,
+  onChange,
+}: {
+  leftLabel: string;
+  rightLabel: string;
+  value: number;
+  disabled: boolean;
+  onChange: (value: number) => void;
+}) {
+  const position = `${value}%`;
+
+  return (
+    <div className="border border-black/10 bg-white p-5 md:p-6">
+      <div className="flex items-center justify-between gap-5">
+        <span className="max-w-[38%] text-sm font-semibold">
+          {leftLabel}
+        </span>
+
+        <div className="flex h-9 min-w-12 items-center justify-center border border-black/8 bg-[#F8F5F1] px-2 text-xs font-semibold">
+          {value}
+        </div>
+
+        <span className="max-w-[38%] text-right text-sm font-semibold">
+          {rightLabel}
+        </span>
+      </div>
+
+      <div className="relative mt-8">
+        <div className="pointer-events-none absolute left-0 right-0 top-1/2 h-1 -translate-y-1/2 bg-black/8" />
+
+        <div
+          className="pointer-events-none absolute left-0 top-1/2 h-1 -translate-y-1/2 bg-[#171519]"
+          style={{
+            width: position,
+          }}
+        />
+
+        <div className="pointer-events-none absolute left-1/2 top-1/2 h-5 w-px -translate-y-1/2 bg-black/10" />
+
+        <input
+          type="range"
+          min="0"
+          max="100"
+          value={value}
+          disabled={disabled}
+          onChange={(event) =>
+            onChange(
+              Number(event.target.value)
+            )
+          }
+          aria-label={`${leftLabel} versus ${rightLabel}`}
+          className="relative z-10 h-6 w-full cursor-pointer appearance-none bg-transparent accent-[#171519] disabled:cursor-default"
+        />
+      </div>
+
+      <div className="mt-2 flex justify-between text-[9px] uppercase tracking-[0.14em] text-black/25">
+        <span>{leftLabel}</span>
+        <span>{rightLabel}</span>
+      </div>
+    </div>
   );
 }
 

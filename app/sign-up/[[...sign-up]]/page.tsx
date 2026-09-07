@@ -9,6 +9,7 @@ export default function SignUpPage() {
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -30,6 +31,7 @@ export default function SignUpPage() {
         body: JSON.stringify({
           firstName,
           lastName,
+          phone,
           email,
           password,
         }),
@@ -77,6 +79,7 @@ export default function SignUpPage() {
 
         <div className="bg-white shadow-sm border border-[#171519]/10 p-8">
           <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Name */}
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label
@@ -90,9 +93,7 @@ export default function SignUpPage() {
                   id="firstName"
                   type="text"
                   value={firstName}
-                  onChange={(event) =>
-                    setFirstName(event.target.value)
-                  }
+                  onChange={(event) => setFirstName(event.target.value)}
                   className="w-full px-3 py-2.5 border border-[#171519]/10 bg-white text-[#171519] outline-none focus:border-[#171519]"
                   autoComplete="given-name"
                 />
@@ -110,15 +111,35 @@ export default function SignUpPage() {
                   id="lastName"
                   type="text"
                   value={lastName}
-                  onChange={(event) =>
-                    setLastName(event.target.value)
-                  }
+                  onChange={(event) => setLastName(event.target.value)}
                   className="w-full px-3 py-2.5 border border-[#171519]/10 bg-white text-[#171519] outline-none focus:border-[#171519]"
                   autoComplete="family-name"
                 />
               </div>
             </div>
 
+            {/* Phone */}
+            <div>
+              <label
+                htmlFor="phone"
+                className="block text-[#171519] text-sm font-medium mb-2"
+              >
+                Phone number
+              </label>
+
+              <input
+                id="phone"
+                type="tel"
+                value={phone}
+                onChange={(event) => setPhone(event.target.value)}
+                required
+                placeholder="+216 XX XXX XXX"
+                className="w-full px-3 py-2.5 border border-[#171519]/10 bg-white text-[#171519] outline-none focus:border-[#171519]"
+                autoComplete="tel"
+              />
+            </div>
+
+            {/* Email */}
             <div>
               <label
                 htmlFor="email"
@@ -131,15 +152,14 @@ export default function SignUpPage() {
                 id="email"
                 type="email"
                 value={email}
-                onChange={(event) =>
-                  setEmail(event.target.value)
-                }
+                onChange={(event) => setEmail(event.target.value)}
                 required
                 className="w-full px-3 py-2.5 border border-[#171519]/10 bg-white text-[#171519] outline-none focus:border-[#171519]"
                 autoComplete="email"
               />
             </div>
 
+            {/* Password */}
             <div>
               <label
                 htmlFor="password"
@@ -152,9 +172,7 @@ export default function SignUpPage() {
                 id="password"
                 type="password"
                 value={password}
-                onChange={(event) =>
-                  setPassword(event.target.value)
-                }
+                onChange={(event) => setPassword(event.target.value)}
                 required
                 minLength={8}
                 className="w-full px-3 py-2.5 border border-[#171519]/10 bg-white text-[#171519] outline-none focus:border-[#171519]"
@@ -166,12 +184,14 @@ export default function SignUpPage() {
               </p>
             </div>
 
+            {/* Error */}
             {error && (
               <div className="border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                 {error}
               </div>
             )}
 
+            {/* Submit */}
             <button
               type="submit"
               disabled={loading}

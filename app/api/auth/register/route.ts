@@ -27,9 +27,14 @@ export async function POST(request: Request) {
         ? body.lastName.trim()
         : "";
 
-    if (!email || !password) {
+    const phone =
+      typeof body.phone === "string"
+        ? body.phone.trim()
+        : "";
+
+    if (!email || !password || !phone) {
       return NextResponse.json(
-        { error: "Email and password are required" },
+        { error: "Email, phone number and password are required" },
         { status: 400 }
       );
     }
@@ -60,12 +65,14 @@ export async function POST(request: Request) {
         passwordHash,
         firstName: firstName || null,
         lastName: lastName || null,
+        phone,
       },
       select: {
         id: true,
         email: true,
         firstName: true,
         lastName: true,
+        phone: true,
         role: true,
       },
     });

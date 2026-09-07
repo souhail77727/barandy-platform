@@ -1,6 +1,13 @@
-
+import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import {
+  ArrowRight,
+  Check,
+  Clock,
+  LockKeyhole,
+  Sparkles,
+} from "lucide-react";
 
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
@@ -19,35 +26,23 @@ export default async function ClientDashboard() {
   }
 
   const user = await prisma.user.findUnique({
-    where: {
-      id: session.user.id,
-    },
+    where: { id: session.user.id },
     select: {
       firstName: true,
       lastName: true,
       accessGranted: true,
-
       assessments: {
-        orderBy: {
-          updatedAt: "desc",
-        },
+        orderBy: { updatedAt: "desc" },
         take: 1,
         select: {
           status: true,
           progress: true,
           updatedAt: true,
-          result: {
-            select: {
-              id: true,
-            },
-          },
+          result: { select: { id: true } },
         },
       },
-
       payments: {
-        orderBy: {
-          createdAt: "desc",
-        },
+        orderBy: { createdAt: "desc" },
         take: 1,
         select: {
           amount: true,
@@ -67,596 +62,371 @@ export default async function ClientDashboard() {
   const payment = user.payments[0];
 
   const displayName =
-    [user.firstName, user.lastName]
-      .filter(Boolean)
-      .join(" ") || "there";
+    [user.firstName, user.lastName].filter(Boolean).join(" ") || "there";
+  const firstName = user.firstName || displayName;
 
-  const assessmentCompleted =
-    assessment?.status === "COMPLETED";
-
-  const assessmentInProgress =
-    assessment?.status === "IN_PROGRESS";
-
-  const assessmentNotStarted =
-    !assessment ||
-    assessment.status === "NOT_STARTED";
+  const assessmentCompleted = assessment?.status === "COMPLETED";
+  const assessmentInProgress = assessment?.status === "IN_PROGRESS";
+  const assessmentNotStarted = !assessment || assessment.status === "NOT_STARTED";
 
   const brandDNAReady = Boolean(assessment?.result);
-
   const accessGranted = user.accessGranted;
 
-  /*
-   * The database stores assessment.progress
-   * as the current step number.
-   */
   const assessmentProgress = Math.min(
     100,
-    Math.round(
-      ((assessment?.progress ?? 0) /
-        TOTAL_ASSESSMENT_STEPS) *
-        100
-    )
+    Math.round(((assessment?.progress ?? 0) / TOTAL_ASSESSMENT_STEPS) * 100)
   );
 
-  /*
-   * Determine the main action the client
-   * should take next.
-   */
+  /* ---------------------------------------------------------
+   * PRIMARY ACTION — unchanged logic
+   * --------------------------------------------------------- */
   let primaryAction = {
     label: "Start Assessment",
     href: "/assessment",
+    description: "Begin your personal brand discovery journey.",
   };
 
   if (assessmentInProgress) {
     primaryAction = {
       label: "Continue Assessment",
       href: "/assessment",
+      description: "Continue where you left off. Your progress is saved.",
     };
   }
 
   if (assessmentCompleted && !accessGranted) {
     primaryAction = {
-      label: "View Payment Instructions",
+      label: "Unlock Brand DNA",
       href: "/payment",
+      description: "Your assessment is complete. Your Brand DNA is ready.",
     };
   }
 
   if (assessmentCompleted && accessGranted) {
     primaryAction = {
-      label: "View My Brand DNA",
+      label: "Explore Brand DNA",
       href: "/results",
+      description: "Your personalized Brand DNA is ready to explore.",
     };
   }
 
+  /* ---------------------------------------------------------
+   * JOURNEY STAGE — unchanged logic
+   * --------------------------------------------------------- */
+  const journeyStage = accessGranted
+    ? 3
+    : assessmentCompleted
+      ? 2
+      : assessmentInProgress
+        ? 1
+        : 0;
+
+  const stageStatus =
+    journeyStage === 3
+      ? "Your journey is complete."
+      : journeyStage === 2
+        ? "Assessment complete — your Brand DNA is ready to unlock."
+        : journeyStage === 1
+          ? `Assessment in progress — ${assessmentProgress}% complete.`
+          : "Your journey starts with the assessment.";
+
+  const steps = [
+    { label: "Assessment", done: assessmentCompleted, current: journeyStage <= 1 },
+    { label: "Brand DNA", done: accessGranted, current: journeyStage === 2 },
+    { label: "Your Profile", done: accessGranted, current: journeyStage === 3 },
+  ];
+
   return (
     <main className="min-h-screen bg-[#F8F5F1] text-[#171519]">
-      {/* =====================================================
-          GLOBAL CLIENT HEADER
-      ====================================================== */}
+      <ClientHeader firstName={user.firstName} currentPage="dashboard" />
 
-      <ClientHeader
-        firstName={user.firstName}
-        currentPage="dashboard"
-      />
-
-      <div className="mx-auto max-w-6xl px-6 py-8 md:px-10 md:py-12">
+      <div className="mx-auto max-w-5xl px-5 pb-20 pt-10 sm:px-6 md:pt-14 lg:px-8">
         {/* =====================================================
-            WELCOME
+            HERO — one primary action, no decorative noise
         ====================================================== */}
-
-        <section className="py-12 md:py-16">
-          <p className="text-xs font-medium uppercase tracking-[0.25em] text-black/40">
-            Welcome back
+        <section className="border-b border-black/10 pb-10 md:pb-12">
+          <p className="text-xs font-medium tracking-wide text-black/40">
+            Client dashboard
           </p>
 
-          <h1 className="mt-4 text-5xl font-semibold tracking-tight md:text-7xl">
-            {displayName}.
+          <h1 className="mt-3 max-w-2xl text-3xl font-semibold leading-[1.1] tracking-tight sm:text-4xl md:text-5xl">
+            Welcome,{" "}
+            <span className="font-serif font-normal italic text-[#8B7653]">
+              {firstName}
+            </span>
+            .
           </h1>
 
-          <p className="mt-6 max-w-2xl text-lg leading-8 text-black/55">
-            Your personal brand journey, from assessment to
-            Brand DNA.
+          <p className="mt-4 max-w-lg text-sm leading-6 text-black/50 md:text-base">
+            {primaryAction.description}
           </p>
 
-          {/* MAIN ACTIONS */}
-
-          <div className="mt-10 flex flex-wrap items-center gap-4">
-            <Link
-              href={primaryAction.href}
-              className="inline-flex items-center bg-[#171519] px-7 py-4 text-sm font-medium text-white transition hover:bg-black/80"
-            >
-              {primaryAction.label}
-
-              <span className="ml-4">
-                →
-              </span>
-            </Link>
-
-            <Link
-              href="/"
-              className="inline-flex items-center border border-black/10 px-6 py-4 text-sm font-medium text-black/55 transition hover:border-black/20 hover:bg-white hover:text-black"
-            >
-              ← Back to Home
-            </Link>
-          </div>
+          <Link
+            href={primaryAction.href}
+            className="group mt-7 inline-flex min-h-[44px] w-fit items-center gap-3 bg-[#171519] px-6 py-3.5 text-sm font-medium text-white transition-colors duration-200 hover:bg-black/85 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#8B7653]"
+          >
+            {primaryAction.label}
+            <ArrowRight
+              className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1"
+              strokeWidth={1.7}
+            />
+          </Link>
         </section>
 
         {/* =====================================================
-            CURRENT STATUS
+            STEPPER — where the user stands, in one line
         ====================================================== */}
-
-        <section className="mb-12">
-          <div className="border border-black/10 bg-white p-6 md:p-8">
-            <div className="flex flex-col justify-between gap-6 md:flex-row md:items-center">
-              <div>
-                <p className="text-xs font-medium uppercase tracking-[0.2em] text-black/40">
-                  Current status
-                </p>
-
-                <h2 className="mt-2 text-2xl font-semibold tracking-tight">
-                  {accessGranted
-                    ? "Your Brand DNA is ready."
-                    : assessmentCompleted
-                      ? "Your assessment is complete."
-                      : assessmentInProgress
-                        ? "Your assessment is in progress."
-                        : "Your journey is ready to begin."}
-                </h2>
-
-                <p className="mt-3 max-w-2xl text-sm leading-7 text-black/55">
-                  {accessGranted
-                    ? "Your personalized Brand DNA has been unlocked. You can explore your profile at any time."
-                    : assessmentCompleted
-                      ? "Your Brand DNA has been generated. Complete the payment process and wait for verification to unlock it."
-                      : assessmentInProgress
-                        ? "Continue your assessment from where you stopped."
-                        : "Complete the diagnostic assessment to generate your personalized Brand DNA."}
-                </p>
-              </div>
-
-              <div className="shrink-0">
-                {accessGranted ? (
-                  <StatusBadge
-                    label="Brand DNA Unlocked"
-                    variant="success"
-                  />
-                ) : assessmentCompleted ? (
-                  <StatusBadge
-                    label="Assessment Completed"
-                    variant="success"
-                  />
-                ) : assessmentInProgress ? (
-                  <StatusBadge
-                    label="In Progress"
-                    variant="neutral"
-                  />
-                ) : (
-                  <StatusBadge
-                    label="Not Started"
-                    variant="neutral"
+        <section
+          className="mt-10 md:mt-12"
+          aria-label="Your progress through the Barandy journey"
+        >
+          <div className="flex items-center">
+            {steps.map((step, i) => (
+              <div key={step.label} className="flex flex-1 items-center last:flex-none">
+                <div className="flex flex-col items-center gap-2">
+                  <div
+                    className={`flex h-8 w-8 items-center justify-center rounded-full border text-xs font-medium transition-colors ${
+                      step.done
+                        ? "border-[#171519] bg-[#171519] text-white"
+                        : step.current
+                          ? "border-[#8B7653] bg-white text-[#8B7653]"
+                          : "border-black/15 bg-white text-black/30"
+                    }`}
+                    aria-hidden="true"
+                  >
+                    {step.done ? <Check className="h-4 w-4" strokeWidth={2} /> : i + 1}
+                  </div>
+                  <span
+                    className={`text-xs ${
+                      step.done || step.current ? "text-black/70" : "text-black/35"
+                    }`}
+                  >
+                    {step.label}
+                  </span>
+                </div>
+                {i < steps.length - 1 && (
+                  <div
+                    className={`mx-3 h-px flex-1 transition-colors ${
+                      steps[i + 1].done || steps[i + 1].current
+                        ? "bg-[#8B7653]/50"
+                        : "bg-black/10"
+                    }`}
+                    aria-hidden="true"
                   />
                 )}
               </div>
-            </div>
+            ))}
           </div>
+
+          <p className="mt-4 text-xs text-black/40">{stageStatus}</p>
         </section>
 
         {/* =====================================================
-            JOURNEY
+            STATUS CARDS
         ====================================================== */}
+        <section className="mt-10 grid gap-4 md:mt-12 md:grid-cols-2">
+          {/* --------------------------------------------------
+              ASSESSMENT
+          -------------------------------------------------- */}
+          <article className="border border-black/10 bg-white p-6 md:p-7">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="text-lg font-semibold tracking-tight">Assessment</h2>
+              <StatusPill
+                label={
+                  assessmentCompleted
+                    ? "Completed"
+                    : assessmentInProgress
+                      ? "In progress"
+                      : "Not started"
+                }
+                tone={assessmentCompleted ? "done" : assessmentInProgress ? "active" : "idle"}
+              />
+            </div>
 
-        <section>
-          <div className="mb-8">
-            <p className="text-xs font-medium uppercase tracking-[0.2em] text-black/40">
-              Your journey
+            <p className="mt-3 text-sm leading-6 text-black/50">
+              {assessmentCompleted
+                ? "Your answers have been analyzed and saved securely."
+                : assessmentInProgress
+                  ? "Continue from where you stopped — your progress is saved automatically."
+                  : "A short, guided diagnostic of your values, purpose and personal brand archetype."}
             </p>
 
-            <h2 className="mt-2 text-3xl font-semibold tracking-tight">
-              Where you are now
-            </h2>
-          </div>
-
-          <div className="grid gap-5 md:grid-cols-2">
-            {/* =================================================
-                ASSESSMENT CARD
-            ================================================== */}
-
-            <article className="border border-black/10 bg-white p-7 md:p-8">
-              <div className="flex items-start justify-between gap-5">
-                <div>
-                  <p className="text-xs uppercase tracking-[0.2em] text-black/35">
-                    01
-                  </p>
-
-                  <h3 className="mt-3 text-2xl font-semibold">
-                    Assessment
-                  </h3>
+            {assessmentInProgress && (
+              <div className="mt-5">
+                <div className="h-1 rounded-full bg-black/10">
+                  <div
+                    className="h-full rounded-full bg-[#171519] transition-all duration-500"
+                    style={{ width: `${assessmentProgress}%` }}
+                  />
                 </div>
-
-                <StatusBadge
-                  label={
-                    assessmentCompleted
-                      ? "Completed"
-                      : assessmentInProgress
-                        ? "In Progress"
-                        : "Not Started"
-                  }
-                  variant={
-                    assessmentCompleted
-                      ? "success"
-                      : "neutral"
-                  }
-                />
+                <p className="mt-1.5 text-xs text-black/40">
+                  {assessmentProgress}% complete
+                </p>
               </div>
+            )}
 
-              <p className="mt-5 text-sm leading-7 text-black/55">
-                {assessmentCompleted
-                  ? "Your assessment has been completed and analyzed. You do not need to take it again."
-                  : assessmentInProgress
-                    ? "You have already started your assessment. Continue from where you stopped."
-                    : "Define your values, archetypes, purpose, vision and voice."}
-              </p>
+            <Link
+              href="/assessment"
+              className="mt-6 inline-flex min-h-[44px] items-center gap-1.5 text-sm font-medium text-[#171519] underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#8B7653]"
+            >
+              {assessmentCompleted
+                ? "Review your answers"
+                : assessmentInProgress
+                  ? "Continue assessment"
+                  : "Begin assessment"}
+              <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.8} />
+            </Link>
+          </article>
 
-              {/* PROGRESS */}
-
-              {assessmentInProgress && (
-                <div className="mt-6">
-                  <div className="mb-2 flex items-center justify-between">
-                    <span className="text-xs text-black/40">
-                      Assessment progress
-                    </span>
-
-                    <span className="text-xs font-medium">
-                      {assessmentProgress}%
-                    </span>
-                  </div>
-
-                  <div className="h-1.5 w-full bg-black/10">
-                    <div
-                      className="h-full bg-[#171519] transition-all"
-                      style={{
-                        width: `${assessmentProgress}%`,
-                      }}
-                    />
-                  </div>
-
-                  <p className="mt-2 text-xs text-black/35">
-                    Your progress is saved automatically.
-                  </p>
-                </div>
-              )}
-
-              {/* COMPLETED STATE */}
-
-              {assessmentCompleted && (
-                <div className="mt-6 border border-black/10 bg-[#F8F5F1] p-4">
-                  <p className="text-xs font-medium uppercase tracking-[0.15em] text-black/45">
-                    Assessment complete
-                  </p>
-
-                  <p className="mt-2 text-sm leading-6 text-black/60">
-                    Your answers are securely saved and your
-                    Brand DNA has been generated. You do not
-                    need to retake the assessment.
-                  </p>
-                </div>
-              )}
-
-              {/* ACTION */}
-
-              <div className="mt-8">
-                {assessmentCompleted ? (
-                  <Link
-                    href="/assessment"
-                    className="inline-flex items-center border border-black/15 px-5 py-3 text-sm font-medium transition hover:bg-[#171519] hover:text-white"
-                  >
-                    Review Assessment
-
-                    <span className="ml-3">
-                      →
-                    </span>
-                  </Link>
-                ) : assessmentInProgress ? (
-                  <Link
-                    href="/assessment"
-                    className="inline-flex items-center bg-[#171519] px-5 py-3 text-sm font-medium text-white transition hover:bg-black/80"
-                  >
-                    Continue Assessment
-
-                    <span className="ml-3">
-                      →
-                    </span>
-                  </Link>
+          {/* --------------------------------------------------
+              BRAND DNA — merges the old card + banner into
+              a single, state-aware source of truth
+          -------------------------------------------------- */}
+          <article className="border border-black/10 bg-[#171519] p-6 text-white md:p-7">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="flex items-center gap-2 text-lg font-semibold tracking-tight">
+                Brand DNA
+                {accessGranted ? (
+                  <Sparkles className="h-4 w-4 text-[#C9A876]" strokeWidth={1.7} aria-hidden="true" />
                 ) : (
-                  <Link
-                    href="/assessment"
-                    className="inline-flex items-center bg-[#171519] px-5 py-3 text-sm font-medium text-white transition hover:bg-black/80"
-                  >
-                    Start Assessment
-
-                    <span className="ml-3">
-                      →
-                    </span>
-                  </Link>
+                  <LockKeyhole className="h-4 w-4 text-white/40" strokeWidth={1.7} aria-hidden="true" />
                 )}
-              </div>
-            </article>
+              </h2>
+              <StatusPill
+                label={accessGranted ? "Unlocked" : brandDNAReady ? "Ready to unlock" : "Not ready"}
+                tone={accessGranted ? "done" : brandDNAReady ? "active" : "idle"}
+                dark
+              />
+            </div>
 
-            {/* =================================================
-                BRAND DNA CARD
-            ================================================== */}
+            {accessGranted ? (
+              <>
+                <p className="mt-3 text-sm leading-6 text-white/55">
+                  Your personalized strategic profile is ready — positioning, voice,
+                  archetype and direction, built from your answers.
+                </p>
+                <Link
+                  href="/results"
+                  className="group mt-6 inline-flex min-h-[44px] items-center gap-2 bg-white px-5 py-3 text-sm font-medium text-[#171519] transition-colors hover:bg-white/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                >
+                  Explore my Brand DNA
+                  <ArrowRight
+                    className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5"
+                    strokeWidth={1.8}
+                  />
+                </Link>
+              </>
+            ) : (
+              <>
+                <p className="mt-3 text-sm leading-6 text-white/55">
+                  {brandDNAReady
+                    ? "Your Brand DNA has been generated. Unlock it to see:"
+                    : "Once your assessment is complete, your Brand DNA will include:"}
+                </p>
 
-            <article className="border border-black/10 bg-white p-7 md:p-8">
-              <div className="flex items-start justify-between gap-5">
-                <div>
-                  <p className="text-xs uppercase tracking-[0.2em] text-black/35">
-                    02
-                  </p>
+                <ul className="mt-3 space-y-1.5 text-sm text-white/50">
+                  <li className="flex items-center gap-2">
+                    <span className="h-1 w-1 rounded-full bg-[#C9A876]" aria-hidden="true" />
+                    Your brand positioning and archetype
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="h-1 w-1 rounded-full bg-[#C9A876]" aria-hidden="true" />
+                    Your strategic voice and tone
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="h-1 w-1 rounded-full bg-[#C9A876]" aria-hidden="true" />
+                    A personalized direction to act on
+                  </li>
+                </ul>
 
-                  <h3 className="mt-3 text-2xl font-semibold">
-                    Brand DNA
-                  </h3>
-                </div>
-
-                <StatusBadge
-                  label={
-                    accessGranted
-                      ? "Unlocked"
-                      : brandDNAReady
-                        ? "Locked"
-                        : "Not Ready"
-                  }
-                  variant={
-                    accessGranted
-                      ? "success"
-                      : "neutral"
-                  }
-                />
-              </div>
-
-              <p className="mt-5 text-sm leading-7 text-black/55">
-                {accessGranted
-                  ? "Your personalized Brand DNA is ready to explore."
-                  : brandDNAReady
-                    ? "Your Brand DNA has already been generated. Payment verification is required before you can access it."
-                    : "Complete your assessment to generate your personalized Brand DNA."}
-              </p>
-
-              {/* PAYMENT STATUS */}
-
-              {brandDNAReady && !accessGranted && (
-                <div className="mt-6 border border-black/10 bg-[#F8F5F1] p-4">
-                  <div className="flex items-center justify-between gap-4">
+                {brandDNAReady && (
+                  <div className="mt-5 flex items-center justify-between border-t border-white/10 pt-4">
                     <div>
-                      <p className="text-xs font-medium uppercase tracking-[0.15em] text-black/45">
-                        Payment status
-                      </p>
-
-                      <p className="mt-2 text-sm font-medium">
+                      <p className="text-xs text-white/40">
                         {payment?.status === "PAID"
-                          ? "Payment received — awaiting access approval"
+                          ? "Payment received — awaiting approval"
                           : payment?.status === "PENDING"
                             ? "Payment pending verification"
                             : payment?.status === "FAILED"
                               ? "Payment requires attention"
-                              : "Payment not completed"}
+                              : "One-time unlock"}
+                      </p>
+                      <p className="mt-0.5 text-lg font-semibold">
+                        {payment?.amount ?? 100}{" "}
+                        <span className="text-xs font-normal text-white/40">
+                          {payment?.currency ?? "TND"}
+                        </span>
                       </p>
                     </div>
-
-                    <PaymentStatusBadge
-                      status={payment?.status}
-                    />
                   </div>
-                </div>
-              )}
-
-              {/* ACTION */}
-
-              <div className="mt-8">
-                {accessGranted ? (
-                  <Link
-                    href="/results"
-                    className="inline-flex items-center bg-[#171519] px-5 py-3 text-sm font-medium text-white transition hover:bg-black/80"
-                  >
-                    View My Brand DNA
-
-                    <span className="ml-3">
-                      →
-                    </span>
-                  </Link>
-                ) : brandDNAReady ? (
-                  <Link
-                    href="/payment"
-                    className="inline-flex items-center border border-black/15 px-5 py-3 text-sm font-medium transition hover:bg-[#171519] hover:text-white"
-                  >
-                    Payment & Unlock
-
-                    <span className="ml-3">
-                      →
-                    </span>
-                  </Link>
-                ) : (
-                  <Link
-                    href="/assessment"
-                    className="inline-flex items-center border border-black/15 px-5 py-3 text-sm font-medium transition hover:bg-[#171519] hover:text-white"
-                  >
-                    Begin Assessment
-
-                    <span className="ml-3">
-                      →
-                    </span>
-                  </Link>
                 )}
-              </div>
-            </article>
-          </div>
+
+                <Link
+                  href={brandDNAReady ? "/payment" : "/assessment"}
+                  className="group mt-6 inline-flex min-h-[44px] items-center gap-2 border border-white/25 px-5 py-3 text-sm font-medium text-white transition-colors hover:border-white/50 hover:bg-white/[0.06] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                >
+                  {brandDNAReady ? "Unlock Brand DNA" : "Complete assessment first"}
+                  <ArrowRight
+                    className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5"
+                    strokeWidth={1.8}
+                  />
+                </Link>
+              </>
+            )}
+          </article>
         </section>
-
-        {/* =====================================================
-            NEXT STEP / PAYMENT
-        ====================================================== */}
-
-        {assessmentCompleted && !accessGranted && (
-          <section className="mt-5">
-            <div className="border border-black/10 bg-white p-7 md:p-8">
-              <div className="flex flex-col justify-between gap-8 md:flex-row md:items-center">
-                <div>
-                  <p className="text-xs font-medium uppercase tracking-[0.2em] text-black/40">
-                    Next step
-                  </p>
-
-                  <h2 className="mt-2 text-2xl font-semibold tracking-tight">
-                    Unlock your Brand DNA
-                  </h2>
-
-                  <p className="mt-3 max-w-2xl text-sm leading-7 text-black/55">
-                    Your personalized profile has already been
-                    generated. You do not need to repeat the
-                    assessment. Complete the payment process
-                    and send your receipt to the Barandy team
-                    for verification.
-                  </p>
-
-                  {/* PAYMENT STATE */}
-
-                  {payment?.status === "PENDING" && (
-                    <div className="mt-5 inline-flex items-center border border-black/10 bg-[#F8F5F1] px-3 py-2 text-xs uppercase tracking-[0.15em] text-black/50">
-                      Payment pending verification
-                    </div>
-                  )}
-
-                  {payment?.status === "PAID" && (
-                    <div className="mt-5 inline-flex items-center border border-black/10 bg-[#F8F5F1] px-3 py-2 text-xs uppercase tracking-[0.15em] text-black/60">
-                      Payment received — awaiting admin approval
-                    </div>
-                  )}
-
-                  {payment?.status === "FAILED" && (
-                    <div className="mt-5 inline-flex items-center border border-red-200 bg-red-50 px-3 py-2 text-xs uppercase tracking-[0.15em] text-red-600">
-                      Payment requires attention
-                    </div>
-                  )}
-                </div>
-
-                {/* PRICE */}
-
-                <div className="shrink-0">
-                  <p className="text-3xl font-semibold">
-                    {payment?.amount ?? 100}{" "}
-                    <span className="text-base font-normal uppercase">
-                      {payment?.currency ?? "TND"}
-                    </span>
-                  </p>
-
-                  <Link
-                    href="/payment"
-                    className="mt-4 inline-flex items-center bg-[#171519] px-6 py-3 text-sm font-medium text-white transition hover:bg-black/80"
-                  >
-                    View Payment Instructions
-
-                    <span className="ml-3">
-                      →
-                    </span>
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </section>
-        )}
-
-        {/* =====================================================
-            UNLOCKED SUCCESS
-        ====================================================== */}
-
-        {accessGranted && (
-          <section className="mt-5">
-            <div className="border border-black/10 bg-[#171519] p-8 text-white md:p-10">
-              <p className="text-xs uppercase tracking-[0.2em] text-white/45">
-                Your profile is ready
-              </p>
-
-              <h2 className="mt-3 text-3xl font-semibold tracking-tight">
-                Your Brand DNA has been unlocked.
-              </h2>
-
-              <p className="mt-4 max-w-2xl text-sm leading-7 text-white/60">
-                Your personalized brand profile is now
-                available. Explore your positioning, voice,
-                archetypes, values and strategic direction.
-              </p>
-
-              <div className="mt-7 flex flex-wrap gap-3">
-                <Link
-                  href="/results"
-                  className="inline-flex items-center bg-white px-6 py-3 text-sm font-medium text-[#171519] transition hover:bg-white/90"
-                >
-                  Explore My Brand DNA
-
-                  <span className="ml-3">
-                    →
-                  </span>
-                </Link>
-
-                <Link
-                  href="/assessment"
-                  className="inline-flex items-center border border-white/20 px-6 py-3 text-sm font-medium text-white transition hover:bg-white/10"
-                >
-                  Review Assessment
-                </Link>
-              </div>
-            </div>
-          </section>
-        )}
 
         {/* =====================================================
             FOOTER
         ====================================================== */}
+        <footer className="mt-16 flex flex-col items-center justify-between gap-4 border-t border-black/10 pt-6 sm:flex-row">
+          <div className="flex items-center gap-3">
+            <Image
+              src="/LOGO.png"
+              alt="Barandy"
+              width={80}
+              height={30}
+              className="h-auto w-16 opacity-60"
+            />
+            <span className="text-xs text-black/35">Personal Brand Intelligence</span>
+          </div>
 
-        <footer className="mt-20 flex flex-col justify-between gap-4 border-t border-black/10 pt-8 md:flex-row">
-          <p className="text-xs leading-6 text-black/40">
-            Barandy — Personal Brand Intelligence
-          </p>
-
-          <div className="flex flex-wrap gap-6">
+          <nav aria-label="Dashboard navigation" className="flex flex-wrap gap-x-5 gap-y-2">
             <Link
               href="/dashboard"
-              className="text-xs text-black/40 transition hover:text-black"
+              className="text-xs text-black/40 transition hover:text-black focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#8B7653]"
             >
               Dashboard
             </Link>
-
             <Link
               href="/assessment"
-              className="text-xs text-black/40 transition hover:text-black"
+              className="text-xs text-black/40 transition hover:text-black focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#8B7653]"
             >
               Assessment
             </Link>
-
             {assessmentCompleted && (
               <Link
                 href="/payment"
-                className="text-xs text-black/40 transition hover:text-black"
+                className="text-xs text-black/40 transition hover:text-black focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#8B7653]"
               >
                 Payment
               </Link>
             )}
-
             {accessGranted && (
               <Link
                 href="/results"
-                className="text-xs text-black/40 transition hover:text-black"
+                className="text-xs text-black/40 transition hover:text-black focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#8B7653]"
               >
                 Brand DNA
               </Link>
             )}
-
             <Link
               href="/"
-              className="text-xs text-black/40 transition hover:text-black"
+              className="text-xs text-black/40 transition hover:text-black focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#8B7653]"
             >
               Home
             </Link>
-          </div>
+          </nav>
         </footer>
       </div>
     </main>
@@ -664,67 +434,36 @@ export default async function ClientDashboard() {
 }
 
 /* ============================================================
-   STATUS BADGE
+   STATUS PILL — replaces StatusBadge + PaymentStatusBadge
 ============================================================ */
-
-function StatusBadge({
+function StatusPill({
   label,
-  variant,
+  tone,
+  dark = false,
 }: {
   label: string;
-  variant: "success" | "neutral";
+  tone: "done" | "active" | "idle";
+  dark?: boolean;
 }) {
+  const styles = dark
+    ? {
+        done: "bg-white/10 text-white/80",
+        active: "bg-[#C9A876]/15 text-[#C9A876]",
+        idle: "bg-white/[0.06] text-white/40",
+      }
+    : {
+        done: "bg-[#171519]/5 text-[#171519]",
+        active: "bg-[#8B7653]/10 text-[#8B7653]",
+        idle: "bg-black/5 text-black/40",
+      };
+
   return (
     <span
-      className={`border px-3 py-1.5 text-[10px] font-medium uppercase tracking-[0.15em] ${
-        variant === "success"
-          ? "border-black/10 bg-[#F8F5F1] text-black/60"
-          : "border-black/10 text-black/40"
-      }`}
+      className={`inline-flex shrink-0 items-center gap-1 px-2.5 py-1 text-xs font-medium ${styles[tone]}`}
     >
-      {variant === "success" && "✓ "}
+      {tone === "done" && <Check className="h-3 w-3" strokeWidth={2} aria-hidden="true" />}
+      {tone === "active" && <Clock className="h-3 w-3" strokeWidth={2} aria-hidden="true" />}
       {label}
     </span>
   );
 }
-
-/* ============================================================
-   PAYMENT STATUS
-============================================================ */
-
-function PaymentStatusBadge({
-  status,
-}: {
-  status?: string;
-}) {
-  if (status === "PAID") {
-    return (
-      <span className="border border-black/10 bg-white px-3 py-1.5 text-[10px] font-medium uppercase tracking-[0.15em] text-black/60">
-        Paid
-      </span>
-    );
-  }
-
-  if (status === "PENDING") {
-    return (
-      <span className="border border-black/10 bg-white px-3 py-1.5 text-[10px] font-medium uppercase tracking-[0.15em] text-black/45">
-        Pending
-      </span>
-    );
-  }
-
-  if (status === "FAILED") {
-    return (
-      <span className="border border-red-200 bg-red-50 px-3 py-1.5 text-[10px] font-medium uppercase tracking-[0.15em] text-red-600">
-        Failed
-      </span>
-    );
-  }
-
-  return (
-    <span className="border border-black/10 bg-white px-3 py-1.5 text-[10px] font-medium uppercase tracking-[0.15em] text-black/40">
-      Not paid
-    </span>
-  );
-}
-

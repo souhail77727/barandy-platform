@@ -139,6 +139,7 @@ export default async function AdminClientDetailPage({
       email: true,
       firstName: true,
       lastName: true,
+      phone: true,
       role: true,
       accessGranted: true,
       createdAt: true,
@@ -291,9 +292,7 @@ export default async function AdminClientDetailPage({
     <main className="min-h-screen bg-[#F8F5F1] text-[#171519]">
       <div className="mx-auto max-w-7xl px-6 py-8 md:px-10 md:py-12">
 
-        {/* ==================================================
-            HEADER
-        ================================================== */}
+        {/* HEADER */}
 
         <header className="flex flex-col gap-5 border-b border-black/10 pb-7 md:flex-row md:items-center md:justify-between">
           <div>
@@ -326,9 +325,7 @@ export default async function AdminClientDetailPage({
           </div>
         </header>
 
-        {/* ==================================================
-            CLIENT HEADER
-        ================================================== */}
+        {/* CLIENT HEADER */}
 
         <section className="mt-12">
           <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
@@ -341,9 +338,15 @@ export default async function AdminClientDetailPage({
                 {fullName}
               </h1>
 
-              <p className="mt-3 text-sm text-black/50">
-                {client.email}
-              </p>
+              <div className="mt-3 space-y-1">
+                <p className="text-sm text-black/50">
+                  {client.email}
+                </p>
+
+                <p className="text-sm text-black/50">
+                  {client.phone || "Phone number not provided"}
+                </p>
+              </div>
             </div>
 
             <div className="flex flex-wrap gap-3">
@@ -370,9 +373,7 @@ export default async function AdminClientDetailPage({
           </div>
         </section>
 
-        {/* ==================================================
-            QUICK OVERVIEW
-        ================================================== */}
+        {/* QUICK OVERVIEW */}
 
         <section className="mt-10 grid gap-px border border-black/10 bg-black/10 md:grid-cols-3">
           <div className="bg-white p-7">
@@ -437,9 +438,7 @@ export default async function AdminClientDetailPage({
           </div>
         </section>
 
-        {/* ==================================================
-            PAYMENT VERIFICATION
-        ================================================== */}
+        {/* PAYMENT VERIFICATION */}
 
         {canUnlock && latestPayment && (
           <section className="mt-10">
@@ -517,9 +516,7 @@ export default async function AdminClientDetailPage({
           </section>
         )}
 
-        {/* ==================================================
-            VERIFIED PAYMENT
-        ================================================== */}
+        {/* VERIFIED PAYMENT */}
 
         {client.accessGranted && paymentPaid && (
           <section className="mt-10">
@@ -567,9 +564,7 @@ export default async function AdminClientDetailPage({
           </section>
         )}
 
-        {/* ==================================================
-            ASSESSMENT RESPONSES
-        ================================================== */}
+        {/* ASSESSMENT RESPONSES */}
 
         <section className="mt-16">
 
@@ -597,9 +592,7 @@ export default async function AdminClientDetailPage({
           ) : (
             <div className="space-y-5">
 
-              {/* ------------------------------------------
-                  STATUS
-              ------------------------------------------ */}
+              {/* STATUS */}
 
               <div className="border border-black/10 bg-white p-7">
 
@@ -648,9 +641,7 @@ export default async function AdminClientDetailPage({
 
               </div>
 
-              {/* ------------------------------------------
-                  IDENTITY
-              ------------------------------------------ */}
+              {/* IDENTITY */}
 
               <div className="border border-black/10 bg-white p-7 md:p-9">
 
@@ -674,9 +665,7 @@ export default async function AdminClientDetailPage({
 
               </div>
 
-              {/* ------------------------------------------
-                  VALUES
-              ------------------------------------------ */}
+              {/* VALUES */}
 
               <div className="border border-black/10 bg-white p-7 md:p-9">
 
@@ -708,9 +697,7 @@ export default async function AdminClientDetailPage({
                 </div>
               </div>
 
-              {/* ------------------------------------------
-                  ARCHETYPES
-              ------------------------------------------ */}
+              {/* ARCHETYPES */}
 
               <div className="border border-black/10 bg-white p-7 md:p-9">
 
@@ -751,9 +738,7 @@ export default async function AdminClientDetailPage({
                 </div>
               </div>
 
-              {/* ------------------------------------------
-                  PURPOSE + VISION
-              ------------------------------------------ */}
+              {/* PURPOSE + VISION */}
 
               <div className="grid gap-5 md:grid-cols-2">
 
@@ -793,9 +778,7 @@ export default async function AdminClientDetailPage({
 
               </div>
 
-              {/* ------------------------------------------
-                  IKIGAI
-              ------------------------------------------ */}
+              {/* IKIGAI */}
 
               <div className="border border-black/10 bg-white p-7 md:p-9">
 
@@ -842,9 +825,7 @@ export default async function AdminClientDetailPage({
                 </div>
               </div>
 
-              {/* ------------------------------------------
-                  PERCEPTION
-              ------------------------------------------ */}
+              {/* PERCEPTION */}
 
               <div className="border border-black/10 bg-white p-7 md:p-9">
 
@@ -897,9 +878,7 @@ export default async function AdminClientDetailPage({
                 </div>
               </div>
 
-              {/* ------------------------------------------
-                  VOICE
-              ------------------------------------------ */}
+              {/* VOICE */}
 
               <div className="border border-black/10 bg-white p-7 md:p-9">
 
@@ -935,9 +914,7 @@ export default async function AdminClientDetailPage({
           )}
         </section>
 
-        {/* ==================================================
-            BRAND DNA
-        ================================================== */}
+        {/* BRAND DNA */}
 
         <section className="mt-20">
 
@@ -967,9 +944,7 @@ export default async function AdminClientDetailPage({
           ) : (
             <div className="space-y-5">
 
-              {/* ------------------------------------------
-                  BRAND OVERVIEW
-              ------------------------------------------ */}
+              {/* BRAND OVERVIEW */}
 
               <div className="border border-black/10 bg-white p-7 md:p-9">
 
@@ -1021,9 +996,7 @@ export default async function AdminClientDetailPage({
 
               </div>
 
-              {/* ------------------------------------------
-                  VOICE + VALUES
-              ------------------------------------------ */}
+              {/* VOICE + VALUES */}
 
               <div className="grid gap-5 md:grid-cols-2">
 
@@ -1094,9 +1067,7 @@ export default async function AdminClientDetailPage({
 
               </div>
 
-              {/* ------------------------------------------
-                  ARCHETYPES
-              ------------------------------------------ */}
+              {/* ARCHETYPES */}
 
               <div className="border border-black/10 bg-white p-7 md:p-9">
 
@@ -1127,9 +1098,7 @@ export default async function AdminClientDetailPage({
                 </div>
               </div>
 
-              {/* ------------------------------------------
-                  PURPOSE + VISION
-              ------------------------------------------ */}
+              {/* PURPOSE + VISION */}
 
               <div className="grid gap-5 md:grid-cols-2">
 
@@ -1167,9 +1136,7 @@ export default async function AdminClientDetailPage({
 
               </div>
 
-              {/* ------------------------------------------
-                  EXECUTIVE POSITIONING
-              ------------------------------------------ */}
+              {/* EXECUTIVE POSITIONING */}
 
               {brandDNA.executivePositioning && (
                 <div className="border border-black/10 bg-white p-7 md:p-9">
@@ -1189,9 +1156,7 @@ export default async function AdminClientDetailPage({
                 </div>
               )}
 
-              {/* ------------------------------------------
-                  STRATEGIC MANIFESTO
-              ------------------------------------------ */}
+              {/* STRATEGIC MANIFESTO */}
 
               {brandDNA.strategicManifesto && (
                 <div className="border border-black/10 bg-[#171519] p-8 text-white md:p-10">
@@ -1207,9 +1172,7 @@ export default async function AdminClientDetailPage({
                 </div>
               )}
 
-              {/* ------------------------------------------
-                  STRATEGIC ADVICE
-              ------------------------------------------ */}
+              {/* STRATEGIC ADVICE */}
 
               {brandDNA.strategicAdvices?.length ? (
                 <div className="border border-black/10 bg-white p-7 md:p-9">
@@ -1245,9 +1208,7 @@ export default async function AdminClientDetailPage({
                 </div>
               ) : null}
 
-              {/* ------------------------------------------
-                  CONTENT PILLARS
-              ------------------------------------------ */}
+              {/* CONTENT PILLARS */}
 
               {brandDNA.contentPillars?.length ? (
                 <div className="border border-black/10 bg-white p-7 md:p-9">
@@ -1300,9 +1261,7 @@ export default async function AdminClientDetailPage({
                 </div>
               ) : null}
 
-              {/* ------------------------------------------
-                  COLOR PALETTE
-              ------------------------------------------ */}
+              {/* COLOR PALETTE */}
 
               {brandDNA.colorPalette && (
                 <div className="border border-black/10 bg-white p-7 md:p-9">
@@ -1350,9 +1309,7 @@ export default async function AdminClientDetailPage({
           )}
         </section>
 
-        {/* ==================================================
-            PAYMENT HISTORY
-        ================================================== */}
+        {/* PAYMENT HISTORY */}
 
         <section className="mt-20">
 
@@ -1430,9 +1387,7 @@ export default async function AdminClientDetailPage({
           )}
         </section>
 
-        {/* ==================================================
-            ACCOUNT INFORMATION
-        ================================================== */}
+        {/* ACCOUNT INFORMATION */}
 
         <section className="mt-20">
 
@@ -1458,6 +1413,11 @@ export default async function AdminClientDetailPage({
             <InfoCard
               label="Email"
               value={client.email}
+            />
+
+            <InfoCard
+              label="Phone"
+              value={client.phone || "Not provided"}
             />
 
             <InfoCard
@@ -1487,9 +1447,7 @@ export default async function AdminClientDetailPage({
           </div>
         </section>
 
-        {/* ==================================================
-            FOOTER
-        ================================================== */}
+        {/* FOOTER */}
 
         <footer className="mt-16 border-t border-black/10 pt-7">
 
@@ -1733,4 +1691,3 @@ function ColorSwatch({
     </div>
   );
 }
-
