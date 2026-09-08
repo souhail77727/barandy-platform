@@ -100,7 +100,10 @@ export async function POST(request: Request) {
 
     return NextResponse.json(
       {
-        error: "Failed to create account",
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unknown registration error",
       },
       { status: 500 }
     );
