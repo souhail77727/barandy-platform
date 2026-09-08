@@ -1,3 +1,4 @@
+
 "use client";
 
 import { FormEvent, useState } from "react";
@@ -20,19 +21,47 @@ export default function SignUpPage() {
     event.preventDefault();
 
     setError("");
+
+    const cleanFirstName = firstName.trim();
+    const cleanLastName = lastName.trim();
+    const cleanPhone = phone.trim();
+    const cleanEmail = email.trim().toLowerCase();
+
+    // Frontend validation
+    if (!cleanPhone) {
+      setError("Phone number is required.");
+      return;
+    }
+
+    if (!cleanEmail) {
+      setError("Email is required.");
+      return;
+    }
+
+    if (!password) {
+      setError("Password is required.");
+      return;
+    }
+
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters.");
+      return;
+    }
+
     setLoading(true);
 
     try {
+      // Create account
       const response = await fetch("/api/auth/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          firstName,
-          lastName,
-          phone,
-          email,
+          firstName: cleanFirstName,
+          lastName: cleanLastName,
+          phone: cleanPhone,
+          email: cleanEmail,
           password,
         }),
       });
@@ -40,24 +69,30 @@ export default function SignUpPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.error || "Failed to create account");
+        setError(data.error || "Failed to create account.");
         return;
       }
 
+      // Automatically sign in after successful registration
       const result = await signIn("credentials", {
-        email,
+        email: cleanEmail,
         password,
         redirect: false,
       });
 
       if (result?.error) {
-        setError("Account created, but sign in failed.");
+        setError(
+          "Account created successfully, but automatic sign in failed. Please sign in manually."
+        );
         return;
       }
 
+      // Go to assessment
       router.push("/assessment");
       router.refresh();
-    } catch {
+    } catch (error) {
+      console.error("Registration error:", error);
+
       setError("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
@@ -67,6 +102,7 @@ export default function SignUpPage() {
   return (
     <div className="min-h-screen bg-[#F8F5F1] flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
+        {/* Header */}
         <div className="text-center mb-8">
           <h1 className="font-primary font-bold text-3xl text-[#171519]">
             BARANDY
@@ -77,9 +113,10 @@ export default function SignUpPage() {
           </p>
         </div>
 
+        {/* Card */}
         <div className="bg-white shadow-sm border border-[#171519]/10 p-8">
           <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Name */}
+            {/* First & Last Name */}
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label
@@ -91,6 +128,7 @@ export default function SignUpPage() {
 
                 <input
                   id="firstName"
+                  name="firstName"
                   type="text"
                   value={firstName}
                   onChange={(event) => setFirstName(event.target.value)}
@@ -109,6 +147,7 @@ export default function SignUpPage() {
 
                 <input
                   id="lastName"
+                  name="lastName"
                   type="text"
                   value={lastName}
                   onChange={(event) => setLastName(event.target.value)}
@@ -129,6 +168,7 @@ export default function SignUpPage() {
 
               <input
                 id="phone"
+                name="phone"
                 type="tel"
                 value={phone}
                 onChange={(event) => setPhone(event.target.value)}
@@ -150,10 +190,12 @@ export default function SignUpPage() {
 
               <input
                 id="email"
+                name="email"
                 type="email"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 required
+                placeholder="you@example.com"
                 className="w-full px-3 py-2.5 border border-[#171519]/10 bg-white text-[#171519] outline-none focus:border-[#171519]"
                 autoComplete="email"
               />
@@ -170,11 +212,13 @@ export default function SignUpPage() {
 
               <input
                 id="password"
+                name="password"
                 type="password"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 required
                 minLength={8}
+                placeholder="••••••••"
                 className="w-full px-3 py-2.5 border border-[#171519]/10 bg-white text-[#171519] outline-none focus:border-[#171519]"
                 autoComplete="new-password"
               />
@@ -186,7 +230,10 @@ export default function SignUpPage() {
 
             {/* Error */}
             {error && (
-              <div className="border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              <div
+                role="alert"
+                className="border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+              >
                 {error}
               </div>
             )}
@@ -195,12 +242,13 @@ export default function SignUpPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-[#171519] text-[#F8F5F1] py-3 font-medium transition-opacity hover:opacity-90 disabled:opacity-50"
+              className="w-full bg-[#171519] text-[#F8F5F1] py-3 font-medium transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {loading ? "Creating account..." : "Create account"}
             </button>
           </form>
 
+          {/* Sign In */}
           <div className="text-center mt-6">
             <p className="text-sm text-[#171519]/60">
               Already have an account?{" "}
@@ -217,3 +265,4 @@ export default function SignUpPage() {
     </div>
   );
 }
+
