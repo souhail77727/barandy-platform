@@ -1,4 +1,12 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
+import {
+  ArrowRight,
+  ArrowUpRight,
+  Check,
+  LockKeyhole,
+  Sparkles,
+} from "lucide-react";
 
 import { auth } from "@/auth";
 import ClientHeader from "@/components/layout/ClientHeader";
@@ -103,6 +111,14 @@ function formatLabel(value?: string) {
     .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
+function getInterpretation(value: number): string {
+  const distance = Math.abs(value - 50);
+  if (value === 50) return "Balanced";
+  if (distance >= 35) return "Clear tendency";
+  if (distance >= 15) return "Leaning";
+  return "Slight preference";
+}
+
 export default async function ResultsPage() {
   const session = await auth();
 
@@ -151,7 +167,7 @@ export default async function ResultsPage() {
 
   /*
    * =========================================================
-   * ACCESS PROTECTION
+   * ACCESS PROTECTION — premium locked state
    * =========================================================
    */
 
@@ -164,25 +180,37 @@ export default async function ResultsPage() {
           showBack
         />
 
-        <main className="mx-auto max-w-6xl px-6 py-12 md:px-10 md:py-20">
+        <main className="mx-auto max-w-6xl px-5 py-12 sm:px-6 md:px-10 md:py-20">
           <div className="mx-auto max-w-4xl">
-            <div className="overflow-hidden rounded-[28px] border border-black/10 bg-white">
+            <div className="overflow-hidden border border-black/10 bg-white">
+              {/* --------------------------------------------------
+                  LOCKED HERO
+              -------------------------------------------------- */}
               <div className="relative overflow-hidden px-7 py-14 md:px-14 md:py-20">
-                <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full border border-black/5" />
-                <div className="pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full border border-black/5" />
+                <div
+                  className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full border border-black/5"
+                  aria-hidden="true"
+                />
+                <div
+                  className="pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full border border-black/5"
+                  aria-hidden="true"
+                />
 
                 <div className="relative">
                   <div className="flex items-center gap-3">
-                    <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#171519] text-xs text-white">
-                      ✦
+                    <span
+                      className="flex h-9 w-9 items-center justify-center rounded-full bg-[#171519] text-xs text-white"
+                      aria-hidden="true"
+                    >
+                      <Sparkles className="h-3.5 w-3.5" strokeWidth={1.8} />
                     </span>
 
-                    <p className="text-xs font-medium uppercase tracking-[0.2em] text-black/40">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-black/40">
                       Brand DNA
                     </p>
                   </div>
 
-                  <h1 className="mt-8 max-w-3xl text-5xl font-medium leading-[0.95] tracking-[-0.055em] md:text-7xl">
+                  <h1 className="mt-8 max-w-3xl text-4xl font-medium leading-[0.98] tracking-[-0.05em] sm:text-5xl md:text-7xl">
                     Your brand has already
                     <span className="text-black/30"> been decoded.</span>
                   </h1>
@@ -200,8 +228,11 @@ export default async function ResultsPage() {
                 </div>
               </div>
 
-              <div className="border-t border-black/10 bg-[#171519] px-7 py-9 text-white md:px-14">
-                <p className="text-xs font-medium uppercase tracking-[0.18em] text-white/35">
+              {/* --------------------------------------------------
+                  PAYWALL CTA
+              -------------------------------------------------- */}
+              <div className="border-t border-black/10 bg-[#171519] px-7 py-10 text-white md:px-14 md:py-12">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/40">
                   One final step
                 </p>
 
@@ -215,13 +246,16 @@ export default async function ResultsPage() {
                   strategic recommendations.
                 </p>
 
-                <a
+                <Link
                   href="/payment"
-                  className="mt-8 inline-flex items-center gap-3 rounded-xl bg-white px-6 py-4 text-xs font-medium uppercase tracking-[0.14em] text-[#171519] transition hover:bg-white/90"
+                  className="group mt-8 inline-flex min-h-[52px] items-center gap-3 bg-white px-6 py-4 text-xs font-semibold uppercase tracking-[0.16em] text-[#171519] transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/95 hover:shadow-[0_12px_30px_rgba(255,255,255,0.15)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
                 >
                   Unlock my Brand DNA
-                  <span className="text-base">→</span>
-                </a>
+                  <ArrowRight
+                    className="h-4 w-4 transition-transform group-hover:translate-x-1"
+                    strokeWidth={1.8}
+                  />
+                </Link>
               </div>
             </div>
           </div>
@@ -255,22 +289,93 @@ export default async function ResultsPage() {
     formatLabel(brandDNA.secondaryArchetype?.id) ||
     "Secondary Archetype";
 
+  const hasArchetypes = Boolean(
+    brandDNA.primaryArchetype || brandDNA.secondaryArchetype
+  );
+  const hasVoice = voiceTone.length > 0 || voiceStyle.length > 0;
+  const hasValues = values.length > 0;
+  const hasIkigai = Boolean(brandDNA.ikigai);
+  const hasPositioning = Boolean(brandDNA.executivePositioning);
+  const hasPerception = Boolean(brandDNA.perception);
+  const hasPurposeOrVision = Boolean(brandDNA.purpose || brandDNA.vision);
+  const hasColorPalette = Boolean(brandDNA.colorPalette);
+  const hasContentPillars = Boolean(
+    brandDNA.contentPillars && brandDNA.contentPillars.length > 0
+  );
+  const hasAdvices = Boolean(
+    brandDNA.strategicAdvices && brandDNA.strategicAdvices.length > 0
+  );
+  const hasManifesto = Boolean(brandDNA.strategicManifesto);
+
   const totalSections = [
-    brandDNA.executivePositioning,
-    voiceTone.length > 0 || voiceStyle.length > 0,
-    brandDNA.primaryArchetype || brandDNA.secondaryArchetype,
-    values.length > 0,
-    brandDNA.ikigai,
-    brandDNA.purpose || brandDNA.vision,
-    brandDNA.perception,
-    brandDNA.colorPalette,
-    brandDNA.contentPillars && brandDNA.contentPillars.length > 0,
-    brandDNA.strategicAdvices && brandDNA.strategicAdvices.length > 0,
-    brandDNA.strategicManifesto,
+    hasArchetypes,
+    hasVoice,
+    hasValues,
+    hasIkigai,
+    hasPositioning,
+    hasPerception,
+    hasPurposeOrVision,
+    hasColorPalette,
+    hasContentPillars,
+    hasAdvices,
   ].filter(Boolean).length;
+
+  /* Sequential numbering — only counts what's actually rendered */
+  let sectionIndex = 0;
+  const nextNumber = () =>
+    String(++sectionIndex).padStart(2, "0");
+
+  const archetypeNumber = hasArchetypes ? nextNumber() : "";
+  const voiceNumber = hasVoice ? nextNumber() : "";
+  const valuesNumber = hasValues ? nextNumber() : "";
+  const ikigaiNumber = hasIkigai ? nextNumber() : "";
+  const positioningNumber = hasPositioning ? nextNumber() : "";
+  const perceptionNumber = hasPerception ? nextNumber() : "";
+  const directionNumber = hasPurposeOrVision ? nextNumber() : "";
+  const visualNumber = hasColorPalette ? nextNumber() : "";
+  const contentNumber = hasContentPillars ? nextNumber() : "";
+  const strategyNumber = hasAdvices ? nextNumber() : "";
+  const manifestoNumber = hasManifesto
+    ? String(sectionIndex + 1).padStart(2, "0")
+    : "";
+
+  /*
+   * =========================================================
+   * MAIN RENDER
+   * =========================================================
+   */
 
   return (
     <div className="min-h-screen bg-[#F8F5F1] text-[#171519]">
+      {/* Global CSS for smooth scroll and reading progress */}
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+            html { scroll-behavior: smooth; }
+            @media (prefers-reduced-motion: reduce) {
+              html { scroll-behavior: auto; }
+            }
+            @keyframes readingProgress {
+              from { transform: scaleX(0); }
+              to   { transform: scaleX(1); }
+            }
+            .reading-progress-bar {
+              animation: readingProgress linear;
+              animation-timeline: scroll(root);
+              transform-origin: left;
+            }
+          `,
+        }}
+      />
+
+      {/* Reading progress bar (CSS scroll-driven, graceful fallback) */}
+      <div
+        className="fixed left-0 right-0 top-0 z-50 h-[2px] bg-transparent"
+        aria-hidden="true"
+      >
+        <div className="reading-progress-bar h-full w-full bg-[#8B7653]" />
+      </div>
+
       <ClientHeader
         firstName={user.firstName}
         currentPage="results"
@@ -278,92 +383,89 @@ export default async function ResultsPage() {
       />
 
       {/* =====================================================
-          EXPLORATION BAR
+          STICKY EXPLORATION NAV
       ===================================================== */}
-
-      <div className="sticky top-0 z-30 border-b border-black/10 bg-[#F8F5F1]/90 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-6 overflow-x-auto px-6 py-3 md:px-10">
+      <div className="sticky top-0 z-30 border-b border-black/10 bg-[#F8F5F1]/85 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-6 px-5 py-3 sm:px-6 md:px-10">
           <div className="flex shrink-0 items-center gap-3">
-            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#171519] text-[10px] text-white">
-              ✦
+            <span
+              className="flex h-7 w-7 items-center justify-center rounded-full bg-[#171519] text-white"
+              aria-hidden="true"
+            >
+              <Sparkles className="h-3 w-3" strokeWidth={1.8} />
             </span>
 
-            <span className="text-[10px] font-medium uppercase tracking-[0.16em] text-black/45">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-black/50">
               Brand DNA
             </span>
           </div>
 
-          <nav className="hidden items-center gap-6 lg:flex">
-            <a
-              href="#identity"
-              className="text-[10px] font-medium uppercase tracking-[0.13em] text-black/40 transition hover:text-black"
-            >
-              Identity
-            </a>
-
-            <a
-              href="#archetypes"
-              className="text-[10px] font-medium uppercase tracking-[0.13em] text-black/40 transition hover:text-black"
-            >
-              Archetypes
-            </a>
-
-            <a
-              href="#voice"
-              className="text-[10px] font-medium uppercase tracking-[0.13em] text-black/40 transition hover:text-black"
-            >
-              Voice
-            </a>
-
-            <a
-              href="#purpose"
-              className="text-[10px] font-medium uppercase tracking-[0.13em] text-black/40 transition hover:text-black"
-            >
-              Purpose
-            </a>
-
-            <a
-              href="#positioning"
-              className="text-[10px] font-medium uppercase tracking-[0.13em] text-black/40 transition hover:text-black"
-            >
-              Positioning
-            </a>
-
-            <a
-              href="#strategy"
-              className="text-[10px] font-medium uppercase tracking-[0.13em] text-black/40 transition hover:text-black"
-            >
-              Strategy
-            </a>
+          <nav
+            aria-label="Section navigation"
+            className="hidden items-center gap-6 lg:flex"
+          >
+            {hasArchetypes && <NavAnchor href="#archetypes" label="Archetypes" />}
+            {hasVoice && <NavAnchor href="#voice" label="Voice" />}
+            {hasValues && <NavAnchor href="#values" label="Values" />}
+            {hasIkigai && <NavAnchor href="#purpose" label="Purpose" />}
+            {hasPositioning && (
+              <NavAnchor href="#positioning" label="Positioning" />
+            )}
+            {hasAdvices && <NavAnchor href="#strategy" label="Strategy" />}
           </nav>
 
-          <span className="shrink-0 rounded-full border border-black/10 bg-white px-3 py-1.5 text-[9px] font-medium uppercase tracking-[0.12em] text-black/40">
+          <span className="shrink-0 rounded-full border border-black/10 bg-white px-3 py-1.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-black/45">
             {totalSections} discoveries
           </span>
         </div>
+
+        {/* Mobile: horizontally scrollable nav */}
+        <nav
+          aria-label="Section navigation"
+          className="flex gap-5 overflow-x-auto border-t border-black/[0.06] px-5 pb-2.5 pt-2 sm:px-6 md:px-10 lg:hidden"
+        >
+          {hasArchetypes && <NavAnchor href="#archetypes" label="Archetypes" />}
+          {hasVoice && <NavAnchor href="#voice" label="Voice" />}
+          {hasValues && <NavAnchor href="#values" label="Values" />}
+          {hasIkigai && <NavAnchor href="#purpose" label="Purpose" />}
+          {hasPositioning && (
+            <NavAnchor href="#positioning" label="Positioning" />
+          )}
+          {hasAdvices && <NavAnchor href="#strategy" label="Strategy" />}
+        </nav>
       </div>
 
-      <main className="mx-auto max-w-6xl px-6 md:px-10">
+      <main className="mx-auto max-w-6xl px-5 sm:px-6 md:px-10">
         {/* =====================================================
             HERO / IDENTITY
         ===================================================== */}
-
         <section
           id="identity"
-          className="relative overflow-hidden border-b border-black/10 py-16 md:py-24"
+          className="relative scroll-mt-24 overflow-hidden border-b border-black/10 py-16 md:py-24"
         >
-          <div className="pointer-events-none absolute -right-32 top-10 h-80 w-80 rounded-full border border-black/5" />
-
-          <div className="pointer-events-none absolute -right-20 top-22 h-56 w-56 rounded-full border border-black/5" />
+          <div
+            className="pointer-events-none absolute -right-32 top-10 h-80 w-80 rounded-full border border-black/[0.04]"
+            aria-hidden="true"
+          />
+          <div
+            className="pointer-events-none absolute -right-20 top-[5.5rem] h-56 w-56 rounded-full border border-black/[0.04]"
+            aria-hidden="true"
+          />
 
           <div className="relative">
             <div className="flex items-center gap-3">
-              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-sm shadow-sm">
-                ✦
+              <span
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm"
+                aria-hidden="true"
+              >
+                <Sparkles
+                  className="h-4 w-4 text-[#8B7653]"
+                  strokeWidth={1.6}
+                />
               </span>
 
               <div>
-                <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-black/35">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-black/40">
                   Your personal brand
                 </p>
 
@@ -373,21 +475,21 @@ export default async function ResultsPage() {
               </div>
             </div>
 
-            <h1 className="mt-10 max-w-5xl text-6xl font-medium leading-[0.88] tracking-[-0.065em] md:text-8xl">
-              {personName}
-              <br />
-              <span className="text-black/25">
-                decoded.
+            <h1 className="mt-10 max-w-5xl text-[3.25rem] font-medium leading-[0.9] tracking-[-0.06em] sm:text-6xl md:text-8xl">
+              <span className="font-serif font-normal italic text-[#8B7653]">
+                {personName}
               </span>
+              <br />
+              <span className="text-black/25">decoded.</span>
             </h1>
 
             {brandDNA.elevatorPitch && (
-              <div className="mt-12 max-w-3xl">
-                <p className="text-xs font-medium uppercase tracking-[0.18em] text-black/35">
+              <div className="mt-14 max-w-3xl">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-black/40">
                   Your brand in one sentence
                 </p>
 
-                <p className="mt-5 text-xl leading-8 tracking-[-0.02em] text-black/65 md:text-2xl md:leading-9">
+                <p className="mt-5 text-xl leading-8 tracking-[-0.02em] text-black/70 md:text-[1.6rem] md:leading-[2.6rem]">
                   {brandDNA.elevatorPitch}
                 </p>
               </div>
@@ -413,9 +515,9 @@ export default async function ResultsPage() {
               />
             </div>
 
-            <div className="mt-10 flex items-center gap-3 text-xs text-black/35">
-              <span className="h-px w-8 bg-black/20" />
-              <span>Keep exploring — there is more to discover.</span>
+            <div className="mt-12 flex items-center gap-3 text-xs text-black/35">
+              <span className="h-px w-8 bg-black/20" aria-hidden="true" />
+              <span>Keep exploring — there is more to discover below.</span>
             </div>
           </div>
         </section>
@@ -423,21 +525,19 @@ export default async function ResultsPage() {
         {/* =====================================================
             ARCHETYPES
         ===================================================== */}
-
-        {(brandDNA.primaryArchetype ||
-          brandDNA.secondaryArchetype) && (
+        {hasArchetypes && (
           <section
             id="archetypes"
-            className="border-b border-black/10 py-16 md:py-24"
+            className="scroll-mt-24 border-b border-black/10 py-16 md:py-24"
           >
             <SectionHeader
-              number="01"
+              number={archetypeNumber}
               eyebrow="The personality layer"
               title="Meet the personality behind your brand."
               description="Your archetypes reveal the energy people are most likely to feel when they experience your personal brand."
             />
 
-            <div className="mt-12 grid gap-5 md:grid-cols-2">
+            <div className="mt-14 grid gap-5 md:grid-cols-2">
               <ArchetypeCard
                 label="Your dominant archetype"
                 archetype={brandDNA.primaryArchetype}
@@ -455,23 +555,23 @@ export default async function ResultsPage() {
         {/* =====================================================
             VOICE
         ===================================================== */}
-
-        {(voiceTone.length > 0 || voiceStyle.length > 0) && (
+        {hasVoice && (
           <section
             id="voice"
-            className="border-b border-black/10 py-16 md:py-24"
+            className="scroll-mt-24 border-b border-black/10 py-16 md:py-24"
           >
             <SectionHeader
-              number="02"
+              number={voiceNumber}
               eyebrow="The communication layer"
               title="Now, hear what your brand sounds like."
               description="Your voice is not just what you say. It is how people feel when they hear you."
             />
 
-            <div className="mt-12 grid gap-5 md:grid-cols-2">
+            <div className="mt-14 grid gap-5 md:grid-cols-2">
               {voiceTone.length > 0 && (
                 <VoiceCard
                   label="Your tone"
+                  title="How you should sound."
                   description="The emotional character behind your communication."
                   items={voiceTone}
                 />
@@ -480,7 +580,8 @@ export default async function ResultsPage() {
               {voiceStyle.length > 0 && (
                 <VoiceCard
                   label="Your style"
-                  description="The way your ideas naturally come across."
+                  title="How your ideas come across."
+                  description="The way your thinking naturally shows up."
                   items={voiceStyle}
                 />
               )}
@@ -491,17 +592,19 @@ export default async function ResultsPage() {
         {/* =====================================================
             VALUES
         ===================================================== */}
-
-        {values.length > 0 && (
-          <section className="border-b border-black/10 py-16 md:py-24">
+        {hasValues && (
+          <section
+            id="values"
+            className="scroll-mt-24 border-b border-black/10 py-16 md:py-24"
+          >
             <SectionHeader
-              number="03"
+              number={valuesNumber}
               eyebrow="The values layer"
               title="These are the things you don't want to compromise on."
               description="Your values become your internal compass — the principles that shape how you decide, create and lead."
             />
 
-            <div className="mt-12 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-14 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {values.map((value, index) => (
                 <ValueCard
                   key={`${value}-${index}`}
@@ -516,20 +619,19 @@ export default async function ResultsPage() {
         {/* =====================================================
             IKIGAI
         ===================================================== */}
-
         {brandDNA.ikigai && (
           <section
             id="purpose"
-            className="border-b border-black/10 py-16 md:py-24"
+            className="scroll-mt-24 border-b border-black/10 py-16 md:py-24"
           >
             <SectionHeader
-              number="04"
+              number={ikigaiNumber}
               eyebrow="The purpose layer"
               title="And here is what makes it meaningful."
               description="Your Ikigai connects what you love, what you are good at, what the world needs and what you can build value around."
             />
 
-            <div className="mt-12 grid gap-3 md:grid-cols-2">
+            <div className="mt-14 grid gap-3 md:grid-cols-2">
               <IkigaiCard
                 number="01"
                 label="Mission"
@@ -556,21 +658,31 @@ export default async function ResultsPage() {
             </div>
 
             {brandDNA.ikigai.intersection && (
-              <div className="relative mt-3 overflow-hidden rounded-[24px] bg-[#171519] px-7 py-10 text-white md:px-12 md:py-14">
-                <div className="pointer-events-none absolute -right-20 -top-20 h-52 w-52 rounded-full border border-white/10" />
+              <div className="relative mt-3 overflow-hidden bg-[#171519] px-7 py-12 text-white md:px-14 md:py-16">
+                <div
+                  className="pointer-events-none absolute -right-20 -top-20 h-52 w-52 rounded-full border border-white/10"
+                  aria-hidden="true"
+                />
+                <div
+                  className="pointer-events-none absolute -bottom-24 -left-16 h-64 w-64 rounded-full border border-white/[0.06]"
+                  aria-hidden="true"
+                />
 
                 <div className="relative">
                   <div className="flex items-center gap-3">
-                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-xs text-[#171519]">
-                      ✦
+                    <span
+                      className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-[#171519]"
+                      aria-hidden="true"
+                    >
+                      <Sparkles className="h-3.5 w-3.5" strokeWidth={1.8} />
                     </span>
 
-                    <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-white/40">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/45">
                       The intersection
                     </p>
                   </div>
 
-                  <p className="mt-7 max-w-4xl text-2xl font-medium leading-9 tracking-[-0.025em] md:text-4xl md:leading-[1.3]">
+                  <p className="mt-8 max-w-4xl text-2xl font-medium leading-9 tracking-[-0.025em] md:text-4xl md:leading-[1.3]">
                     {brandDNA.ikigai.intersection}
                   </p>
                 </div>
@@ -582,32 +694,34 @@ export default async function ResultsPage() {
         {/* =====================================================
             POSITIONING
         ===================================================== */}
-
         {brandDNA.executivePositioning && (
           <section
             id="positioning"
-            className="border-b border-black/10 py-16 md:py-24"
+            className="scroll-mt-24 border-b border-black/10 py-16 md:py-24"
           >
             <SectionHeader
-              number="05"
+              number={positioningNumber}
               eyebrow="The positioning layer"
               title="This is how the world should remember you."
               description="Your positioning turns everything we discovered into a clear space you can own."
             />
 
-            <div className="relative mt-12 overflow-hidden rounded-[24px] border border-black/10 bg-white px-7 py-10 md:px-12 md:py-14">
-              <div className="absolute left-0 top-0 h-1 w-full bg-[#171519]" />
+            <div className="relative mt-14 overflow-hidden border border-black/10 bg-white px-7 py-12 md:px-14 md:py-16">
+              <div
+                className="absolute left-0 top-0 h-1 w-full bg-[#171519]"
+                aria-hidden="true"
+              />
 
-              <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-black/35">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-black/40">
                 Your positioning statement
               </p>
 
-              <p className="mt-8 max-w-4xl text-2xl font-medium leading-[1.35] tracking-[-0.03em] md:text-4xl md:leading-[1.3]">
+              <p className="mt-8 max-w-4xl text-2xl font-medium leading-[1.35] tracking-[-0.03em] md:text-[2.6rem] md:leading-[1.25]">
                 {brandDNA.executivePositioning}
               </p>
 
-              <div className="mt-10 flex items-center gap-3 text-xs text-black/35">
-                <span className="h-px w-8 bg-black/20" />
+              <div className="mt-12 flex items-center gap-3 text-xs text-black/40">
+                <span className="h-px w-8 bg-black/20" aria-hidden="true" />
                 <span>This is the space your brand can own.</span>
               </div>
             </div>
@@ -617,18 +731,17 @@ export default async function ResultsPage() {
         {/* =====================================================
             PERCEPTION
         ===================================================== */}
-
         {brandDNA.perception && (
           <section className="border-b border-black/10 py-16 md:py-24">
             <SectionHeader
-              number="06"
+              number={perceptionNumber}
               eyebrow="The perception layer"
               title="Your brand has a certain gravity."
               description="These dimensions show where your personal brand naturally sits between different strategic extremes."
             />
 
-            <div className="mt-12 rounded-[24px] border border-black/10 bg-white p-7 md:p-12">
-              <div className="space-y-12">
+            <div className="mt-14 border border-black/10 bg-white p-7 md:p-14">
+              <div className="space-y-14">
                 <PerceptionBar
                   left="Specialist"
                   right="Polymath"
@@ -654,8 +767,8 @@ export default async function ResultsPage() {
                 />
               </div>
 
-              <div className="mt-10 border-t border-black/10 pt-7">
-                <p className="text-xs leading-5 text-black/35">
+              <div className="mt-12 border-t border-black/10 pt-7">
+                <p className="text-xs leading-5 text-black/40">
                   Think of these as your brand's natural tendencies — not
                   limitations.
                 </p>
@@ -667,17 +780,16 @@ export default async function ResultsPage() {
         {/* =====================================================
             PURPOSE + VISION
         ===================================================== */}
-
-        {(brandDNA.purpose || brandDNA.vision) && (
+        {hasPurposeOrVision && (
           <section className="border-b border-black/10 py-16 md:py-24">
             <SectionHeader
-              number="07"
+              number={directionNumber}
               eyebrow="The direction layer"
               title="You know who you are. Now, where are you going?"
               description="Purpose gives your brand meaning. Vision gives it direction."
             />
 
-            <div className="mt-12 grid gap-5 md:grid-cols-2">
+            <div className="mt-14 grid gap-5 md:grid-cols-2">
               {brandDNA.purpose && (
                 <DirectionCard
                   label="Purpose"
@@ -700,17 +812,16 @@ export default async function ResultsPage() {
         {/* =====================================================
             VISUAL IDENTITY
         ===================================================== */}
-
         {brandDNA.colorPalette && (
           <section className="border-b border-black/10 py-16 md:py-24">
             <SectionHeader
-              number="08"
+              number={visualNumber}
               eyebrow="The visual layer"
               title="If your brand had a visual mood."
               description="This palette gives you a starting point for expressing your personality visually."
             />
 
-            <div className="mt-12 overflow-hidden rounded-[24px] border border-black/10 bg-white">
+            <div className="mt-14 overflow-hidden border border-black/10 bg-white">
               <div className="grid grid-cols-2 md:grid-cols-5">
                 <ColorSwatch
                   label="Accent"
@@ -742,92 +853,95 @@ export default async function ResultsPage() {
         )}
 
         {/* =====================================================
-            CONTENT
+            CONTENT PILLARS
         ===================================================== */}
+        {hasContentPillars && (
+          <section className="border-b border-black/10 py-16 md:py-24">
+            <SectionHeader
+              number={contentNumber}
+              eyebrow="The content layer"
+              title="Here is what your brand should talk about."
+              description="These content territories help you stay recognizable while giving your audience something valuable to follow."
+            />
 
-        {brandDNA.contentPillars &&
-          brandDNA.contentPillars.length > 0 && (
-            <section className="border-b border-black/10 py-16 md:py-24">
-              <SectionHeader
-                number="09"
-                eyebrow="The content layer"
-                title="Here is what your brand should talk about."
-                description="These content territories help you stay recognizable while giving your audience something valuable to follow."
-              />
-
-              <div className="mt-12 grid gap-5 md:grid-cols-2">
-                {brandDNA.contentPillars.map((pillar, index) => {
-                  if (typeof pillar === "string") {
-                    return (
-                      <ContentCard
-                        key={`pillar-${index}`}
-                        number={index + 1}
-                        title={pillar}
-                      />
-                    );
-                  }
-
+            <div className="mt-14 grid gap-5 md:grid-cols-2">
+              {brandDNA.contentPillars!.map((pillar, index) => {
+                if (typeof pillar === "string") {
                   return (
                     <ContentCard
                       key={`pillar-${index}`}
                       number={index + 1}
-                      title={pillar.title || "Content Pillar"}
-                      description={pillar.description}
+                      title={pillar}
                     />
                   );
-                })}
-              </div>
-            </section>
-          )}
+                }
+
+                return (
+                  <ContentCard
+                    key={`pillar-${index}`}
+                    number={index + 1}
+                    title={pillar.title || "Content Pillar"}
+                    description={pillar.description}
+                  />
+                );
+              })}
+            </div>
+          </section>
+        )}
 
         {/* =====================================================
             STRATEGY
         ===================================================== */}
+        {hasAdvices && (
+          <section
+            id="strategy"
+            className="scroll-mt-24 border-b border-black/10 py-16 md:py-24"
+          >
+            <SectionHeader
+              number={strategyNumber}
+              eyebrow="The action layer"
+              title="Enough discovering. Now let's use it."
+              description="These are the practical moves that can turn your Brand DNA into visible action."
+            />
 
-        {brandDNA.strategicAdvices &&
-          brandDNA.strategicAdvices.length > 0 && (
-            <section
-              id="strategy"
-              className="border-b border-black/10 py-16 md:py-24"
-            >
-              <SectionHeader
-                number="10"
-                eyebrow="The action layer"
-                title="Enough discovering. Now let's use it."
-                description="These are the practical moves that can turn your Brand DNA into visible action."
-              />
-
-              <div className="mt-12 space-y-3">
-                {brandDNA.strategicAdvices.map((advice, index) => (
-                  <AdviceCard
-                    key={`advice-${index}`}
-                    number={index + 1}
-                    advice={advice}
-                  />
-                ))}
-              </div>
-            </section>
-          )}
+            <div className="mt-14 space-y-3">
+              {brandDNA.strategicAdvices!.map((advice, index) => (
+                <AdviceCard
+                  key={`advice-${index}`}
+                  number={index + 1}
+                  advice={advice}
+                />
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* =====================================================
             MANIFESTO
         ===================================================== */}
-
         {brandDNA.strategicManifesto && (
           <section className="py-16 md:py-28">
-            <div className="relative overflow-hidden rounded-[28px] bg-[#171519] px-7 py-12 text-white md:px-14 md:py-20">
-              <div className="pointer-events-none absolute -right-32 -top-32 h-80 w-80 rounded-full border border-white/10" />
-
-              <div className="pointer-events-none absolute -bottom-24 -left-24 h-56 w-56 rounded-full border border-white/5" />
+            <div className="relative overflow-hidden bg-[#171519] px-7 py-14 text-white md:px-14 md:py-24">
+              <div
+                className="pointer-events-none absolute -right-32 -top-32 h-80 w-80 rounded-full border border-white/10"
+                aria-hidden="true"
+              />
+              <div
+                className="pointer-events-none absolute -bottom-24 -left-24 h-56 w-56 rounded-full border border-white/[0.06]"
+                aria-hidden="true"
+              />
 
               <div className="relative">
                 <div className="flex items-center gap-3">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-xs text-[#171519]">
-                    ✦
+                  <span
+                    className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-[#171519]"
+                    aria-hidden="true"
+                  >
+                    <Sparkles className="h-3.5 w-3.5" strokeWidth={1.8} />
                   </span>
 
-                  <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-white/40">
-                    11 / Your manifesto
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-white/45">
+                    {manifestoNumber} · Your manifesto
                   </p>
                 </div>
 
@@ -839,14 +953,14 @@ export default async function ResultsPage() {
                   </span>
                 </h2>
 
-                <div className="mt-12 max-w-3xl">
-                  <p className="whitespace-pre-line text-lg leading-8 text-white/65 md:text-xl md:leading-9">
+                <div className="mt-14 max-w-3xl">
+                  <p className="whitespace-pre-line text-lg leading-8 text-white/70 md:text-xl md:leading-9">
                     {brandDNA.strategicManifesto}
                   </p>
                 </div>
 
-                <div className="mt-12 border-t border-white/10 pt-7">
-                  <p className="text-xs text-white/35">
+                <div className="mt-14 border-t border-white/10 pt-7">
+                  <p className="text-xs text-white/40">
                     Your Brand DNA is not a label. It is a direction.
                   </p>
                 </div>
@@ -856,15 +970,56 @@ export default async function ResultsPage() {
         )}
 
         {/* =====================================================
-            END
+            CLOSING / NEXT STEPS
         ===================================================== */}
+        <section className="border-t border-black/10 py-16 md:py-20">
+          <div className="max-w-2xl">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-black/40">
+              What's next
+            </p>
 
-        <section className="border-t border-black/10 py-12">
-          <div className="flex flex-col gap-8 md:flex-row md:items-end md:justify-between">
+            <h2 className="mt-4 text-3xl font-medium leading-[1.05] tracking-[-0.04em] md:text-4xl">
+              You have the map.{" "}
+              <span className="text-black/30">Now, walk it.</span>
+            </h2>
+
+            <p className="mt-5 text-sm leading-6 text-black/50 md:text-base">
+              Your Brand DNA is a living document. Revisit it, apply it, and
+              let it evolve as your work does.
+            </p>
+          </div>
+
+          <div className="mt-12 grid gap-3 md:grid-cols-3">
+            <NextStepCard
+              number="01"
+              title="Return to your dashboard"
+              description="See your progress and pick up where you left off."
+              href="/dashboard"
+            />
+
+            <NextStepCard
+              number="02"
+              title="Review your answers"
+              description="Revisit the assessment that shaped this profile."
+              href="/assessment"
+            />
+
+            <NextStepCard
+              number="03"
+              title="Start again from scratch"
+              description="As you grow, your Brand DNA can grow with you."
+              href="/assessment"
+            />
+          </div>
+
+          <div className="mt-14 flex flex-col gap-8 border-t border-black/10 pt-8 md:flex-row md:items-end md:justify-between">
             <div>
               <div className="flex items-center gap-3">
-                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#171519] text-xs text-white">
-                  ✦
+                <span
+                  className="flex h-9 w-9 items-center justify-center rounded-full bg-[#171519] text-white"
+                  aria-hidden="true"
+                >
+                  <Sparkles className="h-3.5 w-3.5" strokeWidth={1.8} />
                 </span>
 
                 <p className="text-sm font-semibold tracking-[0.25em]">
@@ -878,12 +1033,12 @@ export default async function ResultsPage() {
             </div>
 
             <div className="max-w-md md:text-right">
-              <p className="text-sm leading-6 text-black/45">
+              <p className="text-sm leading-6 text-black/50">
                 You now have a clearer picture of who you are, how you
                 communicate and where your brand can go.
               </p>
 
-              <p className="mt-3 text-xs text-black/30">
+              <p className="mt-3 text-xs text-black/35">
                 The next step is turning insight into action.
               </p>
             </div>
@@ -900,6 +1055,23 @@ export default async function ResultsPage() {
  * =========================================================
  */
 
+function NavAnchor({
+  href,
+  label,
+}: {
+  href: string;
+  label: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className="whitespace-nowrap text-[10px] font-semibold uppercase tracking-[0.16em] text-black/45 transition-colors duration-200 hover:text-[#171519] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#8B7653]"
+    >
+      {label}
+    </Link>
+  );
+}
+
 function SectionHeader({
   number,
   eyebrow,
@@ -914,20 +1086,23 @@ function SectionHeader({
   return (
     <div className="max-w-3xl">
       <div className="flex items-center gap-3">
-        <span className="flex h-8 w-8 items-center justify-center rounded-full border border-black/10 bg-white text-[10px] font-medium">
+        <span
+          className="flex h-8 w-8 items-center justify-center rounded-full border border-black/10 bg-white text-[10px] font-semibold tabular-nums"
+          aria-hidden="true"
+        >
           {number}
         </span>
 
-        <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-black/35">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-black/45">
           {eyebrow}
         </p>
       </div>
 
-      <h2 className="mt-6 text-3xl font-medium leading-[1.05] tracking-[-0.045em] md:text-5xl">
+      <h2 className="mt-7 text-3xl font-medium leading-[1.05] tracking-[-0.045em] md:text-5xl">
         {title}
       </h2>
 
-      <p className="mt-5 max-w-2xl text-sm leading-6 text-black/50 md:text-base">
+      <p className="mt-5 max-w-2xl text-sm leading-7 text-black/55 md:text-base md:leading-8">
         {description}
       </p>
     </div>
@@ -944,16 +1119,20 @@ function IdentityCard({
   value: string;
 }) {
   return (
-    <div className="rounded-2xl border border-black/10 bg-white p-6 transition duration-300 hover:-translate-y-1 hover:shadow-sm md:p-7">
+    <div className="group rounded-2xl border border-black/10 bg-white p-6 transition-all duration-300 hover:-translate-y-1 hover:border-black/20 hover:shadow-[0_12px_30px_rgba(23,21,25,0.06)] md:p-7">
       <div className="flex items-center justify-between">
-        <span className="text-[10px] font-medium uppercase tracking-[0.16em] text-black/30">
+        <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-black/35">
           {number}
         </span>
 
-        <span className="text-black/20">↗</span>
+        <ArrowUpRight
+          className="h-3.5 w-3.5 text-black/20 transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-black/50"
+          strokeWidth={1.8}
+          aria-hidden="true"
+        />
       </div>
 
-      <p className="mt-8 text-[10px] font-medium uppercase tracking-[0.14em] text-black/35">
+      <p className="mt-8 text-[10px] font-semibold uppercase tracking-[0.16em] text-black/40">
         {label}
       </p>
 
@@ -974,18 +1153,35 @@ function UnlockStep({
   complete?: boolean;
 }) {
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-black/10 bg-[#F8F5F1] px-4 py-3">
+    <div
+      className={`flex items-center gap-3 border px-4 py-3 transition-colors ${
+        complete
+          ? "border-[#8B7653]/25 bg-[#8B7653]/[0.06]"
+          : "border-black/10 bg-[#F8F5F1]"
+      }`}
+    >
       <span
-        className={`flex h-7 w-7 items-center justify-center rounded-full text-[10px] ${
+        className={`flex h-7 w-7 items-center justify-center rounded-full text-[10px] font-semibold ${
           complete
             ? "bg-[#171519] text-white"
             : "border border-black/10 bg-white text-black/40"
         }`}
+        aria-hidden="true"
       >
-        {complete ? "✓" : number}
+        {complete ? (
+          <Check className="h-3 w-3" strokeWidth={2.6} />
+        ) : (
+          number
+        )}
       </span>
 
-      <span className="text-xs text-black/55">{label}</span>
+      <span
+        className={`text-xs font-medium ${
+          complete ? "text-black/70" : "text-black/50"
+        }`}
+      >
+        {label}
+      </span>
     </div>
   );
 }
@@ -1017,14 +1213,17 @@ function ArchetypeCard({
 
   return (
     <div
-      className={`relative overflow-hidden rounded-[24px] border border-black/10 p-7 transition duration-300 hover:-translate-y-1 hover:shadow-md md:p-10 ${
+      className={`relative overflow-hidden border p-7 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_50px_rgba(23,21,25,0.08)] md:p-10 ${
         featured
-          ? "bg-[#171519] text-white"
-          : "bg-white text-[#171519]"
+          ? "border-[#171519] bg-[#171519] text-white"
+          : "border-black/10 bg-white text-[#171519]"
       }`}
     >
       {featured && (
-        <div className="pointer-events-none absolute -right-20 -top-20 h-48 w-48 rounded-full border border-white/10" />
+        <div
+          className="pointer-events-none absolute -right-20 -top-20 h-48 w-48 rounded-full border border-white/10"
+          aria-hidden="true"
+        />
       )}
 
       <div className="relative">
@@ -1037,14 +1236,15 @@ function ArchetypeCard({
                     ? "bg-white text-[#171519]"
                     : "bg-[#F8F5F1]"
                 }`}
+                aria-hidden="true"
               >
                 {archetype.icon}
               </span>
             )}
 
             <p
-              className={`text-[10px] font-medium uppercase tracking-[0.16em] ${
-                featured ? "text-white/40" : "text-black/40"
+              className={`text-[10px] font-semibold uppercase tracking-[0.18em] ${
+                featured ? "text-white/45" : "text-black/45"
               }`}
             >
               {label}
@@ -1053,8 +1253,8 @@ function ArchetypeCard({
 
           {typeof archetype.dominance === "number" && (
             <div
-              className={`text-xs ${
-                featured ? "text-white/40" : "text-black/35"
+              className={`text-xs tabular-nums ${
+                featured ? "text-white/40" : "text-black/40"
               }`}
             >
               {archetype.dominance}%
@@ -1076,21 +1276,19 @@ function ArchetypeCard({
               featured ? "text-white/60" : "text-black/55"
             }`}
           >
-            “{archetype.motto}”
+            &ldquo;{archetype.motto}&rdquo;
           </p>
         )}
 
         {archetype.shadow && (
           <div
             className={`mt-10 border-t pt-7 ${
-              featured
-                ? "border-white/10"
-                : "border-black/10"
+              featured ? "border-white/10" : "border-black/10"
             }`}
           >
             <p
-              className={`text-[10px] font-medium uppercase tracking-[0.15em] ${
-                featured ? "text-white/35" : "text-black/35"
+              className={`text-[10px] font-semibold uppercase tracking-[0.17em] ${
+                featured ? "text-white/35" : "text-black/40"
               }`}
             >
               Watch your shadow
@@ -1112,24 +1310,26 @@ function ArchetypeCard({
 
 function VoiceCard({
   label,
+  title,
   description,
   items,
 }: {
   label: string;
+  title: string;
   description: string;
   items: string[];
 }) {
   return (
-    <div className="rounded-[24px] border border-black/10 bg-white p-7 md:p-10">
-      <p className="text-[10px] font-medium uppercase tracking-[0.17em] text-black/35">
+    <div className="border border-black/10 bg-white p-7 md:p-10">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-black/40">
         {label}
       </p>
 
       <h3 className="mt-3 text-2xl font-medium tracking-[-0.03em]">
-        How people should experience you.
+        {title}
       </h3>
 
-      <p className="mt-3 text-sm leading-6 text-black/45">
+      <p className="mt-3 text-sm leading-6 text-black/50">
         {description}
       </p>
 
@@ -1137,7 +1337,7 @@ function VoiceCard({
         {items.map((item, index) => (
           <span
             key={`${item}-${index}`}
-            className="rounded-full border border-black/10 bg-[#F8F5F1] px-4 py-2.5 text-sm text-black/65 transition hover:bg-[#171519] hover:text-white"
+            className="cursor-default rounded-full border border-black/10 bg-[#F8F5F1] px-4 py-2.5 text-sm text-black/70 transition-all duration-200 hover:border-[#171519] hover:bg-[#171519] hover:text-white"
           >
             {formatLabel(item)}
           </span>
@@ -1155,22 +1355,24 @@ function ValueCard({
   index: number;
 }) {
   return (
-    <div className="group rounded-2xl border border-black/10 bg-white p-7 transition duration-300 hover:-translate-y-1 hover:bg-[#171519] hover:text-white">
+    <div className="group cursor-default rounded-2xl border border-black/10 bg-white p-7 transition-all duration-300 hover:-translate-y-1 hover:border-[#171519] hover:bg-[#171519] hover:text-white">
       <div className="flex items-center justify-between">
-        <span className="text-[10px] text-black/30 group-hover:text-white/30">
+        <span className="text-[10px] font-semibold tabular-nums text-black/35 transition-colors group-hover:text-white/35">
           {String(index + 1).padStart(2, "0")}
         </span>
 
-        <span className="text-black/20 transition group-hover:text-white/30">
-          ↗
-        </span>
+        <ArrowUpRight
+          className="h-3.5 w-3.5 text-black/20 transition-all duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-white/60"
+          strokeWidth={1.8}
+          aria-hidden="true"
+        />
       </div>
 
       <h3 className="mt-14 text-2xl font-medium tracking-[-0.03em]">
         {formatLabel(value)}
       </h3>
 
-      <p className="mt-3 text-xs text-black/35 group-hover:text-white/40">
+      <p className="mt-3 text-xs text-black/40 transition-colors group-hover:text-white/45">
         A principle that shapes your brand.
       </p>
     </div>
@@ -1191,18 +1393,21 @@ function IkigaiCard({
   }
 
   return (
-    <div className="rounded-[20px] border border-black/10 bg-white p-7 transition duration-300 hover:-translate-y-1 hover:shadow-sm md:p-9">
+    <div className="rounded-[20px] border border-black/10 bg-white p-7 transition-all duration-300 hover:-translate-y-1 hover:border-black/20 hover:shadow-[0_12px_30px_rgba(23,21,25,0.05)] md:p-9">
       <div className="flex items-center justify-between">
-        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#F8F5F1] text-[10px]">
+        <span
+          className="flex h-8 w-8 items-center justify-center rounded-full bg-[#F8F5F1] text-[10px] font-semibold tabular-nums"
+          aria-hidden="true"
+        >
           {number}
         </span>
 
-        <span className="text-[10px] font-medium uppercase tracking-[0.14em] text-black/30">
+        <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-black/40">
           {label}
         </span>
       </div>
 
-      <p className="mt-8 text-lg leading-7 text-black/65">
+      <p className="mt-8 text-lg leading-7 text-black/70">
         {value}
       </p>
     </div>
@@ -1219,8 +1424,8 @@ function DirectionCard({
   value: string;
 }) {
   return (
-    <div className="rounded-[24px] border border-black/10 bg-white p-7 md:p-10">
-      <p className="text-[10px] font-medium uppercase tracking-[0.17em] text-black/35">
+    <div className="border border-black/10 bg-white p-7 md:p-10">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-black/40">
         {label}
       </p>
 
@@ -1228,7 +1433,7 @@ function DirectionCard({
         {title}
       </h3>
 
-      <p className="mt-7 text-base leading-7 text-black/60">
+      <p className="mt-7 text-base leading-7 text-black/65">
         {value}
       </p>
     </div>
@@ -1249,43 +1454,41 @@ function PerceptionBar({
       ? Math.min(Math.max(value, 0), 100)
       : 50;
 
+  const interpretation = getInterpretation(safeValue);
+
   return (
     <div>
-      <div className="mb-4 flex items-end justify-between gap-4">
-        <div>
-          <p className="text-xs font-medium uppercase tracking-[0.12em] text-black/55">
-            {left}
-          </p>
-        </div>
+      <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-black/65">
+          {left}
+        </p>
 
-        <div className="text-right">
-          <p className="text-xs font-medium uppercase tracking-[0.12em] text-black/55">
-            {right}
-          </p>
-        </div>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-black/65">
+          {right}
+        </p>
       </div>
 
       <div className="relative h-2 rounded-full bg-[#F1EEE9]">
         <div
           className="absolute left-0 top-0 h-full rounded-full bg-[#171519]/10"
-          style={{
-            width: `${safeValue}%`,
-          }}
+          style={{ width: `${safeValue}%` }}
+          aria-hidden="true"
         />
 
         <div
-          className="absolute top-1/2 flex h-7 w-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-[#171519] text-[8px] text-white shadow-sm"
-          style={{
-            left: `${safeValue}%`,
-          }}
+          className="absolute top-1/2 flex h-8 w-8 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-[#171519] text-[9px] font-semibold tabular-nums text-white shadow-[0_2px_8px_rgba(23,21,25,0.15)]"
+          style={{ left: `${safeValue}%` }}
         >
           {safeValue}
         </div>
       </div>
 
-      <div className="mt-4 flex justify-between text-[10px] text-black/30">
-        <span>0</span>
-        <span>100</span>
+      <div className="mt-4 flex items-center justify-between text-[10px] uppercase tracking-[0.14em]">
+        <span className="text-black/30">0</span>
+
+        <span className="text-[#8B7653]">{interpretation}</span>
+
+        <span className="text-black/30">100</span>
       </div>
     </div>
   );
@@ -1303,20 +1506,19 @@ function ColorSwatch({
   }
 
   return (
-    <div className="bg-white p-4 md:p-5">
+    <div className="border-b border-black/[0.06] bg-white p-4 last:border-b-0 md:border-b-0 md:border-r md:last:border-r-0 md:p-5">
       <div
-        className="aspect-square rounded-xl border border-black/10 shadow-inner"
-        style={{
-          backgroundColor: value,
-        }}
+        className="aspect-square rounded-xl border border-black/[0.08] shadow-[inset_0_0_0_1px_rgba(0,0,0,0.02)]"
+        style={{ backgroundColor: value }}
+        aria-hidden="true"
       />
 
       <div className="mt-4">
-        <p className="text-[9px] font-medium uppercase tracking-[0.12em] text-black/35">
+        <p className="text-[9px] font-semibold uppercase tracking-[0.16em] text-black/40">
           {label}
         </p>
 
-        <p className="mt-2 font-mono text-[10px] text-black/55">
+        <p className="mt-2 font-mono text-[10px] uppercase text-black/60">
           {value}
         </p>
       </div>
@@ -1334,15 +1536,20 @@ function ContentCard({
   description?: string;
 }) {
   return (
-    <div className="group rounded-[24px] border border-black/10 bg-white p-7 transition duration-300 hover:-translate-y-1 hover:bg-[#171519] hover:text-white md:p-10">
+    <div className="group cursor-default rounded-[24px] border border-black/10 bg-white p-7 transition-all duration-300 hover:-translate-y-1 hover:border-[#171519] hover:bg-[#171519] hover:text-white md:p-10">
       <div className="flex items-center justify-between">
-        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#F8F5F1] text-[10px] text-black/45 group-hover:bg-white/10 group-hover:text-white/60">
+        <span
+          className="flex h-8 w-8 items-center justify-center rounded-full bg-[#F8F5F1] text-[10px] font-semibold tabular-nums text-black/45 transition-colors group-hover:bg-white/10 group-hover:text-white/60"
+          aria-hidden="true"
+        >
           {String(number).padStart(2, "0")}
         </span>
 
-        <span className="text-black/20 group-hover:text-white/30">
-          ↗
-        </span>
+        <ArrowUpRight
+          className="h-3.5 w-3.5 text-black/20 transition-all duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-white/60"
+          strokeWidth={1.8}
+          aria-hidden="true"
+        />
       </div>
 
       <h3 className="mt-12 text-2xl font-medium tracking-[-0.03em]">
@@ -1350,7 +1557,7 @@ function ContentCard({
       </h3>
 
       {description && (
-        <p className="mt-5 text-sm leading-6 text-black/50 group-hover:text-white/55">
+        <p className="mt-5 text-sm leading-6 text-black/55 transition-colors group-hover:text-white/60">
           {description}
         </p>
       )}
@@ -1366,18 +1573,67 @@ function AdviceCard({
   advice: string;
 }) {
   return (
-    <div className="group grid gap-6 rounded-[20px] border border-black/10 bg-white p-6 transition duration-300 hover:border-black/20 hover:shadow-sm md:grid-cols-[60px_1fr_auto] md:items-center md:p-8">
-      <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#F8F5F1] text-[10px] text-black/45">
+    <div className="group grid gap-6 rounded-[20px] border border-black/10 bg-white p-6 transition-all duration-300 hover:-translate-y-0.5 hover:border-black/25 hover:shadow-[0_12px_30px_rgba(23,21,25,0.05)] md:grid-cols-[60px_1fr_auto] md:items-center md:p-8">
+      <span
+        className="flex h-9 w-9 items-center justify-center rounded-full bg-[#F8F5F1] text-[10px] font-semibold tabular-nums text-black/50"
+        aria-hidden="true"
+      >
         {String(number).padStart(2, "0")}
       </span>
 
-      <p className="max-w-3xl text-base leading-7 text-black/65">
+      <p className="max-w-3xl text-base leading-7 text-black/70">
         {advice}
       </p>
 
-      <span className="hidden text-black/20 transition group-hover:translate-x-1 group-hover:text-black/50 md:block">
-        →
-      </span>
+      <ArrowRight
+        className="hidden h-4 w-4 text-black/20 transition-all duration-200 group-hover:translate-x-1 group-hover:text-black/60 md:block"
+        strokeWidth={1.8}
+        aria-hidden="true"
+      />
     </div>
+  );
+}
+
+function NextStepCard({
+  number,
+  title,
+  description,
+  href,
+}: {
+  number: string;
+  title: string;
+  description: string;
+  href: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className="group flex flex-col justify-between border border-black/10 bg-white p-6 transition-all duration-300 hover:-translate-y-1 hover:border-[#171519] hover:bg-[#171519] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#8B7653] md:p-7"
+    >
+      <div className="flex items-start justify-between">
+        <span
+          className="text-[10px] font-semibold tabular-nums text-black/35 transition-colors group-hover:text-white/35"
+          aria-hidden="true"
+        >
+          {number}
+        </span>
+
+        <ArrowUpRight
+          className="h-4 w-4 text-black/25 transition-all duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-white/70"
+          strokeWidth={1.8}
+          aria-hidden="true"
+        />
+      </div>
+
+      <div className="mt-10">
+        <p className="text-base font-medium tracking-[-0.02em]">
+          {title}
+        </p>
+
+        <p className="mt-2 text-sm leading-6 text-black/50 transition-colors group-hover:text-white/55">
+          {description}
+        </p>
+      </div>
+    </Link>
   );
 }
