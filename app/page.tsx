@@ -3,11 +3,14 @@ import { auth } from "@/auth";
 import {
   ArrowDown,
   ArrowRight,
+  ArrowUpRight,
   Check,
+  Circle,
   Compass,
   Palette,
   ShieldCheck,
   Sparkles,
+  Target,
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -17,154 +20,198 @@ export default async function Home() {
 
   const isSignedIn = !!session?.user?.id;
   const userName = session?.user?.name?.split(" ")[0] || "Client";
+  const primaryHref = isSignedIn ? "/dashboard" : "/sign-up";
 
-  const journey = [
+  const brandElements = [
     {
-      step: "01",
-      title: "Registration",
-      desc: "Client identity & profile",
+      number: "01",
+      title: "Identity & Values",
+      description:
+        "The qualities and principles you want your professional identity to express.",
     },
     {
-      step: "02",
-      title: "Values Analysis",
-      desc: "Core value ranking",
+      number: "02",
+      title: "Purpose & Vision",
+      description:
+        "The contribution you want to make and the future you want to build.",
     },
     {
-      step: "03",
-      title: "IKIGAI Matrix",
-      desc: "Four-pillar synthesis",
-    },
-    {
-      step: "04",
-      title: "Archetype",
-      desc: "Dominance calibration",
-    },
-    {
-      step: "05",
-      title: "Brand DNA",
-      desc: "Executive positioning",
-    },
-    {
-      step: "06",
-      title: "Color Intelligence",
-      desc: "Signature palette",
-    },
-    {
-      step: "07",
-      title: "Client Dossier",
-      desc: "Strategic brand system",
-    },
-  ];
-
-  const methodology = [
-    {
-      icon: Compass,
-      title: "Positioning",
-      desc: "Clarify what you stand for, who you influence, and the territory your brand should own.",
-    },
-    {
-      icon: Palette,
-      title: "Visual Intelligence",
-      desc: "Translate your internal values into a visual language through strategic color intelligence.",
-    },
-    {
-      icon: ShieldCheck,
-      title: "Private Intelligence",
-      desc: "Your personal brand assessment remains inside a private and confidential client environment.",
-    },
-    {
-      icon: Sparkles,
-      title: "Brand DNA",
-      desc: "Receive a concise strategic synthesis of your identity, tone, archetype, and positioning.",
-    },
-  ];
-
-  const metrics = [
-    {
-      number: "07",
-      label: "Diagnostic Dimensions",
+      number: "03",
+      title: "Ikigai",
+      description:
+        "A synthesis of what matters to you, what you do well, and where your work can make a difference.",
     },
     {
       number: "04",
-      label: "Core Identity Pillars",
+      title: "Archetypes",
+      description:
+        "Primary and secondary archetypes that help give your brand a recognizable character.",
     },
     {
       number: "05",
-      label: "Color Intelligence Layers",
+      title: "Voice & Perception",
+      description:
+        "A communication tone and a clearer picture of how you want people to perceive you.",
     },
     {
+      number: "06",
+      title: "Color Intelligence",
+      description:
+        "A considered color direction connected to the values you selected.",
+    },
+    {
+      number: "07",
+      title: "Strategic Positioning",
+      description:
+        "A practical foundation for your positioning, elevator pitch, content pillars, and strategic guidance.",
+    },
+  ];
+
+  const principles = [
+    {
       number: "01",
-      label: "Strategic Brand Dossier",
+      icon: Compass,
+      title: "Start with the person",
+      description:
+        "The process begins with your identity and perspective, giving your brand a meaningful foundation.",
+    },
+    {
+      number: "02",
+      icon: Palette,
+      title: "Connect strategy and expression",
+      description:
+        "Your values, voice, archetypes, and visual direction come together in one coherent picture.",
+    },
+    {
+      number: "03",
+      icon: ShieldCheck,
+      title: "Keep your work private",
+      description:
+        "Your assessment and Brand DNA are part of a private client experience.",
     },
   ];
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-[#F7F3EE] text-[#171519] selection:bg-[#D9B896] selection:text-[#171519]">
-      {/* HEADER */}
-      <header className="sticky top-0 z-50 border-b border-[#171519]/10 bg-[#F7F3EE]/90 backdrop-blur-xl">
-        <div className="mx-auto flex h-[76px] max-w-7xl items-center justify-between px-6 sm:px-8 lg:px-10">
+      {/* ========================================================= */}
+      {/* FIXED BRAND NAVIGATION                                    */}
+      {/* ========================================================= */}
+
+      <aside className="fixed left-5 top-1/2 z-50 hidden -translate-y-1/2 flex-col gap-2 lg:flex">
+        <a
+          href="#top"
+          aria-label="Home"
+          className="group flex h-14 w-14 items-center justify-center rounded-2xl border border-[#171519]/5 bg-[#ECE9DF] transition-all duration-300 hover:bg-[#171519] hover:text-[#F7F3EE]"
+        >
+          <span className="text-[11px] font-black tracking-[-0.08em] transition-transform duration-500 group-hover:scale-110">
+            B
+          </span>
+        </a>
+
+        <a
+          href="#why"
+          aria-label="Why Barandy"
+          className="group flex h-14 w-14 items-center justify-center rounded-2xl border border-[#171519]/5 bg-[#ECE9DF] transition-all duration-300 hover:bg-[#171519] hover:text-[#F7F3EE]"
+        >
+          <Circle className="h-5 w-5 transition-transform duration-300 group-hover:scale-75" />
+        </a>
+
+        <a
+          href="#method"
+          aria-label="How it works"
+          className="group flex h-14 w-14 items-center justify-center rounded-2xl border border-[#171519]/5 bg-[#ECE9DF] transition-all duration-300 hover:bg-[#171519] hover:text-[#F7F3EE]"
+        >
+          <Compass className="h-5 w-5 transition-transform duration-300 group-hover:rotate-45" />
+        </a>
+
+        <a
+          href="#brand-dna"
+          aria-label="Brand DNA"
+          className="group flex h-14 w-14 items-center justify-center rounded-2xl border border-[#171519]/5 bg-[#ECE9DF] transition-all duration-300 hover:bg-[#171519] hover:text-[#F7F3EE]"
+        >
+          <Target className="h-5 w-5 transition-transform duration-300 group-hover:scale-110" />
+        </a>
+
+        <a
+          href="#start"
+          aria-label="Start assessment"
+          className="group flex h-14 w-14 items-center justify-center rounded-2xl border border-[#171519]/5 bg-[#ECE9DF] transition-all duration-300 hover:bg-[#171519] hover:text-[#F7F3EE]"
+        >
+          <ArrowUpRight className="h-5 w-5 transition-transform duration-300 group-hover:-translate-y-1 group-hover:translate-x-1" />
+        </a>
+      </aside>
+
+      {/* ========================================================= */}
+      {/* HEADER                                                     */}
+      {/* ========================================================= */}
+
+      <header className="fixed left-0 right-0 top-0 z-40">
+        <div className="mx-auto flex h-[82px] max-w-[1700px] items-center justify-between px-6 sm:px-10 lg:px-16">
           <Link
             href="/"
-            className="group flex items-center gap-3 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D9B896]"
+            id="top"
+            aria-label="Barandy home"
+            className="group flex items-center gap-3"
           >
-            <div className="flex h-10 w-10 items-center justify-center transition-transform duration-500 group-hover:scale-105">
+            <div className="h-10 w-10 transition-transform duration-300 group-hover:scale-105">
               <img
                 src="/LOGO.png"
-                alt="Barandly - Personal Brand Intelligence"
+                alt="Barandy"
                 className="h-full w-full object-contain"
                 loading="eager"
               />
             </div>
 
             <div className="hidden sm:block">
-              <div className="font-sans bg-gradient-to-r from-[#171519] to-[#4A4349] bg-clip-text text-sm font-extrabold tracking-[0.18em] text-transparent">
-                BARANDLY
+              <div className="bg-gradient-to-r from-[#171519] to-[#4A4349] bg-clip-text font-sans text-sm font-extrabold tracking-[0.18em] text-transparent">
+                BARANDY
               </div>
 
-              <div className="font-mono text-[8px] uppercase tracking-[0.25em] text-[#171519]/45">
+              <div className="mt-1 font-mono text-[8px] uppercase tracking-[0.22em] text-[#171519]/45">
                 Brand Architecture
               </div>
             </div>
           </Link>
 
           <nav
-            className="hidden items-center gap-10 lg:flex"
             aria-label="Main navigation"
+            className="hidden items-center gap-9 lg:flex"
           >
             <a
-              href="#methodology"
-              className="font-sans text-[11px] font-semibold uppercase tracking-[0.16em] text-[#171519]/55 transition-colors hover:text-[#171519]"
+              href="#why"
+              className="font-sans text-[10px] font-bold uppercase tracking-[0.15em] text-[#171519]/55 transition-colors hover:text-[#171519]"
             >
-              Methodology
+              Why Barandy
             </a>
 
             <a
-              href="#journey"
-              className="font-sans text-[11px] font-semibold uppercase tracking-[0.16em] text-[#171519]/55 transition-colors hover:text-[#171519]"
+              href="#method"
+              className="font-sans text-[10px] font-bold uppercase tracking-[0.15em] text-[#171519]/55 transition-colors hover:text-[#171519]"
             >
-              Journey
+              How It Works
             </a>
 
             <a
-              href="#philosophy"
-              className="font-sans text-[11px] font-semibold uppercase tracking-[0.16em] text-[#171519]/55 transition-colors hover:text-[#171519]"
+              href="#brand-dna"
+              className="font-sans text-[10px] font-bold uppercase tracking-[0.15em] text-[#171519]/55 transition-colors hover:text-[#171519]"
             >
-              Philosophy
+              Your Brand DNA
             </a>
           </nav>
 
           <div className="flex items-center gap-2 sm:gap-4">
             {isSignedIn ? (
               <>
-                <span className="hidden font-sans text-xs font-medium text-[#171519]/60 sm:block">
+                <span className="hidden font-sans text-xs text-[#171519]/55 sm:block">
                   Welcome, {userName}
                 </span>
 
                 <Link
                   href="/dashboard"
-                  className="group relative inline-flex items-center gap-2 overflow-hidden border border-[#171519] bg-[#171519] px-4 py-2.5 font-sans text-[10px] font-bold uppercase tracking-[0.14em] text-[#F7F3EE] transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#2A262A] hover:shadow-lg"
+                  className="group inline-flex min-h-11 items-center justify-center gap-3 rounded-full bg-[#171519] px-5 font-sans text-[9px] font-extrabold uppercase tracking-[0.13em] text-[#F7F3EE] transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#332E31]"
                 >
-                  <span>Dashboard</span>
+                  Dashboard
+
                   <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1" />
                 </Link>
               </>
@@ -172,246 +219,355 @@ export default async function Home() {
               <>
                 <Link
                   href="/sign-in"
-                  className="hidden rounded-md px-3 py-2 font-sans text-[10px] font-bold uppercase tracking-[0.14em] text-[#171519]/60 transition-colors hover:text-[#171519] sm:block"
+                  className="hidden px-3 py-3 font-sans text-[9px] font-bold uppercase tracking-[0.13em] text-[#171519]/60 transition-opacity hover:opacity-50 sm:block"
                 >
                   Sign In
                 </Link>
 
                 <Link
                   href="/sign-up"
-                  className="group inline-flex items-center gap-2 border border-[#171519] bg-[#171519] px-4 py-2.5 font-sans text-[10px] font-bold uppercase tracking-[0.14em] text-[#F7F3EE] transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#2A262A] hover:shadow-lg"
+                  className="group inline-flex min-h-11 items-center justify-center gap-3 rounded-full bg-[#171519] px-5 font-sans text-[9px] font-extrabold uppercase tracking-[0.13em] text-[#F7F3EE] transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#332E31]"
                 >
-                  <span>Begin</span>
+                  Get Started
+
                   <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1" />
                 </Link>
               </>
             )}
           </div>
         </div>
+
+        {/* MOBILE NAV */}
+        <nav
+          aria-label="Page sections"
+          className="border-t border-[#171519]/5 bg-[#F7F3EE]/90 backdrop-blur-xl lg:hidden"
+        >
+          <div className="mx-auto flex max-w-7xl gap-7 overflow-x-auto px-6 py-2.5 sm:px-10">
+            <a
+              href="#why"
+              className="shrink-0 py-1 font-sans text-[9px] font-bold uppercase tracking-[0.12em] text-[#171519]/60"
+            >
+              Why Barandy
+            </a>
+
+            <a
+              href="#method"
+              className="shrink-0 py-1 font-sans text-[9px] font-bold uppercase tracking-[0.12em] text-[#171519]/60"
+            >
+              How It Works
+            </a>
+
+            <a
+              href="#brand-dna"
+              className="shrink-0 py-1 font-sans text-[9px] font-bold uppercase tracking-[0.12em] text-[#171519]/60"
+            >
+              Brand DNA
+            </a>
+
+            {!isSignedIn && (
+              <Link
+                href="/sign-in"
+                className="shrink-0 py-1 font-sans text-[9px] font-bold uppercase tracking-[0.12em] text-[#171519]/60"
+              >
+                Sign In
+              </Link>
+            )}
+          </div>
+        </nav>
       </header>
 
-      {/* HERO */}
       <main>
-        <section className="relative flex min-h-[calc(100vh-76px)] items-center overflow-hidden">
-          {/* Background decoration */}
-          <div className="pointer-events-none absolute inset-0 overflow-hidden">
-            <div className="absolute left-[-180px] top-1/2 h-[500px] w-[500px] -translate-y-1/2 rounded-full border border-[#D9B896]/20 animate-soft-pulse" />
+        {/* ======================================================= */}
+        {/* HERO                                                     */}
+        {/* ======================================================= */}
 
-            <div className="absolute right-[-220px] top-20 h-[600px] w-[600px] rounded-full border border-[#171519]/5 animate-soft-pulse animation-delay-2000" />
-
-            <div className="absolute right-[10%] top-[20%] h-2 w-2 rounded-full bg-[#D9B896] animate-soft-ping" />
-
-            <div className="absolute bottom-[18%] left-[12%] h-1.5 w-1.5 rounded-full bg-[#171519]/30 animate-soft-pulse" />
+        <section className="relative min-h-screen overflow-hidden px-6 pt-28 sm:px-10 lg:px-20">
+          {/* LARGE BARANDY LOGO WATERMARK */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute left-1/2 top-[46%] z-0 -translate-x-1/2 -translate-y-1/2 opacity-[0.035]"
+          >
+            <img
+              src="/LOGO.png"
+              alt=""
+              className="h-[38rem] w-[38rem] object-contain grayscale"
+            />
           </div>
 
-          <div className="relative mx-auto w-full max-w-7xl px-6 py-20 sm:px-8 lg:px-10 lg:py-28">
-            <div className="grid items-center gap-16 lg:grid-cols-[1.05fr_0.95fr]">
-              {/* HERO COPY */}
-              <div className="max-w-3xl animate-fade-in-up">
-                <div className="mb-8 flex items-center gap-3">
-                  <span className="h-px w-10 bg-[#D9B896]" />
+          {/* SECOND OFFSET WATERMARK */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute -right-[12rem] bottom-[4%] z-0 opacity-[0.025]"
+          >
+            <img
+              src="/LOGO.png"
+              alt=""
+              className="h-[30rem] w-[30rem] object-contain grayscale"
+            />
+          </div>
 
-                  <span className="font-sans text-[10px] font-bold uppercase tracking-[0.3em] text-[#171519]/55">
-                    Personal Brand Intelligence
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute left-[13%] top-[18%] z-0 h-3 w-3 rounded-full bg-[#D9D9CF]"
+          />
+
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute right-[8%] top-[35%] z-0 hidden h-px w-24 bg-[#171519]/15 lg:block"
+          />
+
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute right-[7.5%] top-[34.5%] z-0 hidden h-4 w-4 rounded-full border border-[#171519]/15 lg:block"
+          >
+            <div className="absolute left-1/2 top-1/2 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#171519]" />
+          </div>
+
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute -right-[15rem] top-[12rem] z-0 h-[38rem] w-[38rem] rounded-full border border-[#A98968]/15"
+          />
+
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute -right-[10rem] top-[17rem] z-0 h-[28rem] w-[28rem] rounded-full border border-[#171519]/[0.06]"
+          />
+
+          <div className="relative z-10 mx-auto flex min-h-[calc(100vh-7rem)] max-w-[1700px] flex-col justify-between pb-12">
+            <div className="pt-8">
+              <div className="flex items-center gap-3">
+                <span className="h-px w-9 bg-[#A98968]" />
+
+                <span className="font-sans text-[9px] font-bold uppercase tracking-[0.25em] text-[#171519]/55">
+                  Personal Brand Intelligence
+                </span>
+              </div>
+            </div>
+
+            <div className="relative mx-auto w-full max-w-[1500px] py-14 text-center">
+              <div
+                aria-hidden="true"
+                className="absolute left-1/2 top-0 -translate-x-1/2 text-[#A98968]/60"
+              >
+                <Sparkles className="h-6 w-6 animate-[spin_16s_linear_infinite]" />
+              </div>
+
+              <h1 className="font-sans text-[clamp(4.3rem,11vw,11.8rem)] font-extrabold leading-[0.77] tracking-[-0.08em]">
+                Your brand
+                <br />
+                has a{" "}
+                <span className="relative inline-block">
+                  DNA
+                  <span className="absolute -right-3 -top-1 text-[0.15em] font-black text-[#A98968] sm:-right-5">
+                    ✦
                   </span>
+                </span>
+                .
+              </h1>
+            </div>
+
+            <div className="grid items-end gap-10 lg:grid-cols-[1fr_auto_1fr]">
+              <div className="hidden lg:block">
+                <div className="mb-3 font-mono text-[8px] font-bold uppercase tracking-[0.2em] text-[#171519]/35">
+                  01 / 04
                 </div>
 
-                <h1 className="font-sans text-5xl font-extrabold leading-[0.98] tracking-[-0.045em] sm:text-6xl lg:text-7xl xl:text-[82px]">
-                  Your brand
-                  <br />
-                  has a{" "}
-                  <span className="relative inline-block font-serif italic font-normal text-[#A98968]">
-                    DNA.
-                    <span className="absolute bottom-0 left-0 h-[3px] w-full bg-[#D9B896]/30" />
-                  </span>
-                </h1>
+                <div className="h-px w-28 bg-[#171519]/20" />
 
-                <p className="mt-8 max-w-xl font-sans text-base leading-8 text-[#171519]/65 sm:text-lg">
-                  Barandly decodes the architecture behind your personal
-                  brand — transforming your values, identity, archetype,
-                  and perception into a coherent strategic system.
+                <div className="mt-4 max-w-[170px] font-sans text-[9px] uppercase leading-5 tracking-[0.1em] text-[#171519]/45">
+                  Identity
+                  <br />
+                  Strategy
+                  <br />
+                  Expression
+                </div>
+              </div>
+
+              <div className="mx-auto max-w-[620px] text-center">
+                <p className="font-sans text-[18px] leading-[1.3] tracking-[-0.025em] sm:text-[21px] lg:text-[24px]">
+                  Barandy decodes the architecture behind your personal brand —
+                  turning your identity, values, archetype and perception into a
+                  strategic system.
                 </p>
 
-                {/* CTA BUTTONS */}
-                <div className="mt-10 flex flex-col gap-3 sm:flex-row">
+                <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
                   <Link
-                    href={isSignedIn ? "/dashboard" : "/sign-up"}
-                    className="group relative inline-flex items-center justify-center gap-3 overflow-hidden border border-[#171519] bg-[#171519] px-7 py-4 font-sans text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#F7F3EE] shadow-sm transition-all duration-300 hover:-translate-y-1 hover:bg-[#2A262A] hover:shadow-xl"
+                    href={primaryHref}
+                    className="group inline-flex min-h-14 items-center justify-center gap-4 rounded-full bg-[#171519] px-7 font-sans text-[10px] font-extrabold uppercase tracking-[0.14em] text-[#F7F3EE] transition-all duration-300 hover:-translate-y-1 hover:bg-[#332E31]"
                   >
-                    <span>
-                      {isSignedIn
-                        ? "Open My Dashboard"
-                        : "Begin Your Assessment"}
-                    </span>
+                    {isSignedIn
+                      ? "Open My Dashboard"
+                      : "Start Your Assessment"}
 
                     <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
-
-                    <span className="absolute inset-0 bg-gradient-to-r from-[#D9B896]/10 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                   </Link>
 
                   <a
-                    href="#methodology"
-                    className="group inline-flex items-center justify-center gap-3 border border-[#171519]/15 bg-white/40 px-7 py-4 font-sans text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#171519]/70 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#171519]/30 hover:bg-white hover:text-[#171519]"
+                    href="#method"
+                    className="group inline-flex min-h-14 items-center justify-center gap-3 rounded-full border border-[#171519]/20 px-7 font-sans text-[10px] font-bold uppercase tracking-[0.14em] text-[#171519]/70 transition-all duration-300 hover:bg-[#171519] hover:text-[#F7F3EE]"
                   >
-                    Explore Methodology
+                    Explore the process
 
                     <ArrowDown className="h-4 w-4 transition-transform duration-300 group-hover:translate-y-1" />
                   </a>
                 </div>
 
-                {/* TRUST POINTS */}
-                <div className="mt-10 flex flex-wrap items-center gap-5 font-sans text-[9px] font-bold uppercase tracking-[0.12em] text-[#171519]/45">
-                  <div className="flex items-center gap-2">
+                <div className="mt-7 flex flex-wrap justify-center gap-x-7 gap-y-3">
+                  <span className="inline-flex items-center gap-2 font-sans text-[8px] font-bold uppercase tracking-[0.13em] text-[#171519]/45">
                     <Check className="h-3.5 w-3.5 text-[#A98968]" />
-                    Deterministic Analysis
-                  </div>
+                    Built around your answers
+                  </span>
 
-                  <div className="h-3 w-px bg-[#171519]/15" />
-
-                  <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center gap-2 font-sans text-[8px] font-bold uppercase tracking-[0.13em] text-[#171519]/45">
                     <Check className="h-3.5 w-3.5 text-[#A98968]" />
-                    Private & Confidential
-                  </div>
+                    Private client experience
+                  </span>
                 </div>
               </div>
 
-              {/* HERO VISUAL */}
-              <div className="relative flex min-h-[440px] items-center justify-center animate-fade-in-up animation-delay-200 lg:min-h-[560px]">
-                <div className="absolute h-[360px] w-[360px] rounded-full border border-[#D9B896]/30 animate-spin-slow sm:h-[440px] sm:w-[440px]" />
-
-                <div className="absolute h-[290px] w-[290px] rounded-full border border-[#171519]/10 sm:h-[350px] sm:w-[350px]" />
-
-                <div className="absolute right-[10%] top-[17%] flex h-14 w-14 items-center justify-center border border-[#D9B896]/50 bg-[#F7F3EE] shadow-lg animate-float">
-                  <Sparkles className="h-5 w-5 text-[#A98968]" />
-                </div>
-
-                <div className="relative flex h-56 w-56 items-center justify-center sm:h-72 sm:w-72">
-                  <div className="absolute inset-0 rounded-full bg-[#D9B896]/10 blur-3xl" />
-
-                  <img
-                    src="/LOGO.png"
-                    alt="Barandly Brand DNA"
-                    className="relative h-full w-full object-contain drop-shadow-[0_20px_35px_rgba(23,21,25,0.12)]"
-                    loading="eager"
-                  />
-                </div>
-
-                <div className="absolute bottom-[8%] left-[5%] border border-[#171519]/10 bg-white/95 px-5 py-4 shadow-xl backdrop-blur-sm transition-all duration-300 hover:scale-105 hover:shadow-2xl">
-                  <div className="font-mono text-[8px] uppercase tracking-[0.25em] text-[#A98968]">
-                    BARANDLY
+              <div className="hidden justify-end lg:flex">
+                <div className="text-right">
+                  <div className="font-sans text-[8px] font-bold uppercase tracking-[0.18em] text-[#171519]/35">
+                    Built around
                   </div>
 
-                  <div className="mt-1 font-sans text-xs font-extrabold tracking-wide">
-                    Brand DNA™
+                  <div className="mt-1 font-sans text-[10px] font-bold uppercase tracking-[0.08em]">
+                    Your identity
+                  </div>
+
+                  <div className="font-sans text-[10px] font-bold uppercase tracking-[0.08em]">
+                    Your perspective
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Scroll indicator */}
-            <div className="mt-12 hidden items-center gap-3 animate-fade-in-up lg:flex">
-              <div className="h-px w-10 bg-[#171519]/20" />
-
-              <span className="font-mono text-[8px] uppercase tracking-[0.25em] text-[#171519]/40">
-                Scroll to decode
+            <div className="absolute bottom-9 right-8 hidden flex-col items-center gap-3 lg:flex">
+              <span className="font-sans text-[8px] font-bold uppercase tracking-[0.2em] [writing-mode:vertical-rl]">
+                Scroll
               </span>
 
-              <ArrowDown className="h-3 w-3 text-[#A98968] animate-bounce" />
+              <div className="h-14 w-px bg-[#171519]/20" />
             </div>
           </div>
         </section>
 
-        {/* METRICS */}
-        <section className="border-y border-[#171519]/10 bg-[#171519] text-[#F7F3EE]">
-          <div className="mx-auto grid max-w-7xl grid-cols-2 lg:grid-cols-4">
-            {metrics.map((metric, index) => (
-              <div
-                key={metric.label}
-                className={`group relative px-6 py-10 sm:px-8 lg:px-10 lg:py-12 ${
-                  index !== metrics.length - 1
-                    ? "border-b border-[#F7F3EE]/10 lg:border-b-0 lg:border-r"
-                    : ""
-                } ${
-                  index === 0
-                    ? "border-r border-[#F7F3EE]/10"
-                    : index === 2
-                      ? "border-r border-[#F7F3EE]/10"
-                      : ""
-                }`}
-              >
-                <div className="font-sans text-4xl font-extrabold tracking-[-0.04em] text-[#D9B896] transition-transform duration-300 group-hover:-translate-y-1 sm:text-5xl">
-                  {metric.number}
-                </div>
+        {/* ======================================================= */}
+        {/* IDEA                                                     */}
+        {/* ======================================================= */}
 
-                <div className="mt-3 max-w-[150px] font-sans text-[9px] font-bold uppercase leading-5 tracking-[0.16em] text-[#F7F3EE]/55">
-                  {metric.label}
-                </div>
-              </div>
-            ))}
+        <section className="relative overflow-hidden border-y border-[#171519]/10 px-6 py-16 sm:px-10 lg:px-20 lg:py-24">
+          {/* SUBTLE LOGO */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute right-[-7rem] top-1/2 z-0 -translate-y-1/2 opacity-[0.025]"
+          >
+            <img
+              src="/LOGO.png"
+              alt=""
+              className="h-[25rem] w-[25rem] object-contain grayscale"
+            />
+          </div>
+
+          <div className="relative z-10 mx-auto grid max-w-[1500px] gap-10 lg:grid-cols-[0.65fr_2fr] lg:items-center">
+            <div>
+              <span className="font-sans text-[9px] font-bold uppercase tracking-[0.24em] text-[#171519]/40">
+                The idea
+              </span>
+
+              <div className="mt-5 h-px w-12 bg-[#A98968]" />
+            </div>
+
+            <h2 className="max-w-[1100px] font-sans text-[clamp(2.8rem,6.3vw,7rem)] font-extrabold leading-[0.86] tracking-[-0.065em]">
+              A personal brand is not just how you look.
+              <span className="font-serif font-normal italic text-[#A98968]">
+                {" "}
+                It is how you are perceived.
+              </span>
+            </h2>
           </div>
         </section>
 
-        {/* METHODOLOGY */}
+        {/* ======================================================= */}
+        {/* WHY BARANDY                                               */}
+        {/* ======================================================= */}
+
         <section
-          id="methodology"
-          className="border-b border-[#171519]/10 bg-[#F7F3EE]"
+          id="why"
+          className="relative scroll-mt-28 overflow-hidden bg-[#171519] text-[#F7F3EE]"
         >
-          <div className="mx-auto max-w-7xl px-6 py-24 sm:px-8 lg:px-10 lg:py-32">
-            <div className="grid gap-16 lg:grid-cols-[0.8fr_1.2fr]">
-              <div>
-                <div className="flex items-center gap-3">
-                  <span className="h-px w-10 bg-[#D9B896]" />
+          {/* INVERTED BARANDY LOGO */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute right-[-12rem] top-1/2 z-0 -translate-y-1/2 opacity-[0.055]"
+          >
+            <img
+              src="/LOGO.png"
+              alt=""
+              className="h-[40rem] w-[40rem] object-contain brightness-0 invert"
+            />
+          </div>
 
-                  <span className="font-sans text-[10px] font-bold uppercase tracking-[0.3em] text-[#171519]/45">
-                    The Method
-                  </span>
-                </div>
+          {/* SECOND LOGO */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute bottom-[-10rem] left-[-8rem] z-0 opacity-[0.025]"
+          >
+            <img
+              src="/LOGO.png"
+              alt=""
+              className="h-[28rem] w-[28rem] object-contain brightness-0 invert"
+            />
+          </div>
 
-                <h2 className="mt-6 font-sans text-4xl font-extrabold leading-[1.05] tracking-[-0.04em] sm:text-5xl">
-                  Strategy before
-                  <br />
-                  <span className="font-serif font-normal italic text-[#A98968]">
-                    aesthetics.
-                  </span>
-                </h2>
+          <div className="relative z-10 mx-auto grid max-w-[1500px] gap-14 px-6 py-24 sm:px-10 lg:grid-cols-[0.75fr_1.25fr] lg:gap-24 lg:px-20 lg:py-36">
+            <div>
+              <p className="flex items-center gap-3 font-sans text-[9px] font-bold uppercase tracking-[0.25em] text-[#F7F3EE]/45">
+                <span className="h-px w-9 bg-[#D9B896]" />
+                Why Barandy
+              </p>
 
-                <p className="mt-6 max-w-md font-sans text-sm leading-7 text-[#171519]/60">
-                  Your visual identity should not be random. Barandly starts
-                  with the person behind the brand, then translates that
-                  identity into a strategic system.
-                </p>
+              <h2 className="mt-8 max-w-2xl font-sans text-[clamp(3.5rem,7vw,7.5rem)] font-extrabold leading-[0.8] tracking-[-0.07em]">
+                Your brand is
+                <br />
+                more than
+                <br />
+                <span className="font-serif font-normal italic text-[#D9B896]">
+                  aesthetics.
+                </span>
+              </h2>
+            </div>
 
-                <Link
-                  href={isSignedIn ? "/dashboard" : "/sign-up"}
-                  className="group mt-8 inline-flex items-center gap-3 border-b border-[#171519]/30 pb-2 font-sans text-[10px] font-extrabold uppercase tracking-[0.16em] transition-all hover:border-[#A98968]"
-                >
-                  {isSignedIn ? "Continue My Journey" : "Start My Analysis"}
+            <div className="flex flex-col justify-between gap-14 lg:py-3">
+              <p className="max-w-2xl font-sans text-base leading-8 text-[#F7F3EE]/65 sm:text-lg sm:leading-9">
+                It is the impression created by your choices, values,
+                communication, and the way you show up. When those parts feel
+                disconnected, it becomes harder to explain what makes your
+                perspective distinct.
+              </p>
 
-                  <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1" />
-                </Link>
-              </div>
-
-              <div className="grid gap-px border border-[#171519]/10 bg-[#171519]/10 sm:grid-cols-2">
-                {methodology.map((item) => {
+              <div className="grid gap-8 border-t border-[#F7F3EE]/15 pt-8 sm:grid-cols-3 sm:gap-6">
+                {principles.map((item) => {
                   const Icon = item.icon;
 
                   return (
-                    <div
-                      key={item.title}
-                      className="group bg-[#F7F3EE] p-7 transition-colors duration-300 hover:bg-white sm:p-8"
-                    >
-                      <div className="flex h-11 w-11 items-center justify-center border border-[#171519]/10 transition-all duration-300 group-hover:border-[#D9B896] group-hover:bg-[#D9B896]/10">
-                        <Icon className="h-5 w-5 text-[#A98968]" />
+                    <article key={item.number}>
+                      <div className="flex items-center gap-3">
+                        <Icon className="h-4 w-4 text-[#D9B896]" />
+
+                        <span className="font-mono text-[8px] tracking-[0.18em] text-[#D9B896]/70">
+                          {item.number}
+                        </span>
                       </div>
 
-                      <h3 className="mt-6 font-sans text-sm font-extrabold uppercase tracking-[0.08em]">
+                      <h3 className="mt-5 font-sans text-[11px] font-bold uppercase leading-5 tracking-[0.08em]">
                         {item.title}
                       </h3>
 
-                      <p className="mt-3 font-sans text-sm leading-7 text-[#171519]/55">
-                        {item.desc}
+                      <p className="mt-3 max-w-xs font-sans text-xs leading-6 text-[#F7F3EE]/50">
+                        {item.description}
                       </p>
-                    </div>
+                    </article>
                   );
                 })}
               </div>
@@ -419,71 +575,105 @@ export default async function Home() {
           </div>
         </section>
 
-        {/* JOURNEY */}
-        <section
-          id="journey"
-          className="border-b border-[#171519]/10 bg-white"
-        >
-          <div className="mx-auto max-w-7xl px-6 py-24 sm:px-8 lg:px-10 lg:py-32">
-            <div className="max-w-2xl">
-              <div className="flex items-center gap-3">
-                <span className="h-px w-10 bg-[#D9B896]" />
+        {/* ======================================================= */}
+        {/* HOW IT WORKS                                             */}
+        {/* ======================================================= */}
 
-                <span className="font-sans text-[10px] font-bold uppercase tracking-[0.3em] text-[#171519]/45">
-                  The Journey
-                </span>
+        <section
+          id="method"
+          className="relative scroll-mt-28 overflow-hidden border-b border-[#171519]/10 bg-[#EDE4D9]"
+        >
+          {/* SIDE LOGO */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute bottom-[-8rem] right-[-10rem] z-0 opacity-[0.035]"
+          >
+            <img
+              src="/LOGO.png"
+              alt=""
+              className="h-[36rem] w-[36rem] object-contain grayscale"
+            />
+          </div>
+
+          <div className="relative z-10 mx-auto max-w-[1500px] px-6 py-24 sm:px-10 lg:px-20 lg:py-36">
+            <div className="grid gap-14 lg:grid-cols-[0.7fr_1.3fr] lg:gap-24">
+              <div>
+                <p className="flex items-center gap-3 font-sans text-[9px] font-bold uppercase tracking-[0.25em] text-[#171519]/45">
+                  <span className="h-px w-9 bg-[#A98968]" />
+                  How It Works
+                </p>
+
+                <h2 className="mt-8 max-w-xl font-sans text-[clamp(3.2rem,6vw,6.5rem)] font-extrabold leading-[0.82] tracking-[-0.065em]">
+                  Reflection
+                  <br />
+                  first.
+                  <br />
+                  <span className="font-serif font-normal italic text-[#8F6D4D]">
+                    Direction next.
+                  </span>
+                </h2>
+
+                <p className="mt-8 max-w-md font-sans text-sm leading-7 text-[#171519]/60">
+                  The assessment helps bring the person behind your brand into
+                  focus. Your responses shape a Brand DNA profile that connects
+                  identity with a clearer way to express it.
+                </p>
               </div>
 
-              <h2 className="mt-6 font-sans text-4xl font-extrabold leading-[1.05] tracking-[-0.04em] sm:text-5xl">
-                From identity
-                <br />
-                to{" "}
-                <span className="font-serif font-normal italic text-[#A98968]">
-                  architecture.
-                </span>
-              </h2>
-
-              <p className="mt-6 max-w-xl font-sans text-sm leading-7 text-[#171519]/60">
-                A structured diagnostic journey designed to progressively
-                transform personal insight into a coherent brand system.
-              </p>
-            </div>
-
-            <div className="mt-16 grid gap-px border border-[#171519]/10 bg-[#171519]/10 md:grid-cols-2 lg:grid-cols-4">
-              {journey.map((item, index) => (
-                <div
-                  key={item.step}
-                  className="group relative min-h-[190px] bg-white p-7 transition-all duration-300 hover:bg-[#F7F3EE]"
-                >
-                  <div className="flex items-start justify-between">
-                    <span className="font-mono text-[10px] font-bold tracking-[0.2em] text-[#A98968]">
-                      {item.step}
+              <div className="border-t border-[#171519]/15">
+                {[
+                  {
+                    number: "01",
+                    title: "Reflect",
+                    description:
+                      "Answer guided questions about the values, motivations, ambitions, and perspective behind your work.",
+                  },
+                  {
+                    number: "02",
+                    title: "Find the pattern",
+                    description:
+                      "Your answers inform a connected view of your identity, positioning, voice, archetypes, and visual direction.",
+                  },
+                  {
+                    number: "03",
+                    title: "Build with clarity",
+                    description:
+                      "Your Brand DNA becomes a strategic foundation for expressing your personal brand with greater consistency.",
+                  },
+                ].map((item) => (
+                  <article
+                    key={item.number}
+                    className="group grid gap-5 border-b border-[#171519]/15 py-9 transition-all duration-300 hover:px-3 sm:grid-cols-[80px_1fr_1.5fr] sm:items-start"
+                  >
+                    <span className="font-mono text-[9px] tracking-[0.18em] text-[#8F6D4D]">
+                      {item.number}
                     </span>
 
-                    <ArrowRight className="h-4 w-4 text-[#171519]/15 transition-all duration-300 group-hover:translate-x-1 group-hover:text-[#A98968]" />
-                  </div>
+                    <h3 className="font-serif text-3xl italic tracking-[-0.03em] sm:text-4xl">
+                      {item.title}
+                    </h3>
 
-                  <h3 className="mt-12 font-sans text-sm font-extrabold uppercase tracking-[0.08em]">
-                    {item.title}
-                  </h3>
-
-                  <p className="mt-2 font-sans text-xs leading-6 text-[#171519]/50">
-                    {item.desc}
-                  </p>
-
-                  {index < journey.length - 1 && (
-                    <div className="absolute bottom-0 left-7 right-7 h-px bg-[#171519]/5 lg:hidden" />
-                  )}
-                </div>
-              ))}
+                    <p className="max-w-md font-sans text-sm leading-7 text-[#171519]/55">
+                      {item.description}
+                    </p>
+                  </article>
+                ))}
+              </div>
             </div>
 
-            <div className="mt-10 flex justify-center">
+            <div className="mt-12 flex flex-col items-start justify-between gap-6 border-t border-[#171519]/15 pt-8 sm:flex-row sm:items-center">
+              <p className="max-w-lg font-sans text-xs leading-6 text-[#171519]/50">
+                A structured reflection followed by a personal brand
+                foundation designed around your answers.
+              </p>
+
               <Link
-                href={isSignedIn ? "/dashboard" : "/sign-up"}
-                className="group inline-flex items-center gap-3 bg-[#171519] px-7 py-4 font-sans text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#F7F3EE] transition-all duration-300 hover:-translate-y-1 hover:bg-[#2A262A] hover:shadow-xl"
+                href={primaryHref}
+                className="group inline-flex items-center gap-3 border-b border-[#171519]/35 pb-2 font-sans text-[9px] font-extrabold uppercase tracking-[0.14em] transition-colors hover:border-[#8F6D4D]"
               >
-                {isSignedIn ? "Open My Dashboard" : "Start the 7-Step Journey"}
+                {isSignedIn
+                  ? "Continue to Your Dashboard"
+                  : "Begin Your Assessment"}
 
                 <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
               </Link>
@@ -491,229 +681,360 @@ export default async function Home() {
           </div>
         </section>
 
-        {/* PHILOSOPHY */}
-        <section id="philosophy" className="bg-[#171519] text-[#F7F3EE]">
-          <div className="mx-auto max-w-7xl px-6 py-24 sm:px-8 lg:px-10 lg:py-32">
-            <div className="grid items-center gap-16 lg:grid-cols-[1.1fr_0.9fr]">
-              <div>
-                <div className="flex items-center gap-3">
-                  <span className="h-px w-10 bg-[#D9B896]" />
+        {/* ======================================================= */}
+        {/* INTENTIONAL                                              */}
+        {/* ======================================================= */}
 
-                  <span className="font-sans text-[10px] font-bold uppercase tracking-[0.3em] text-[#F7F3EE]/45">
-                    Philosophy
-                  </span>
-                </div>
+        <section className="relative overflow-hidden bg-[#171519] px-6 py-24 text-[#F7F3EE] sm:px-10 lg:px-20 lg:py-36">
+          {/* LARGE INVERTED LOGO */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute left-1/2 top-1/2 z-0 -translate-x-1/2 -translate-y-1/2 opacity-[0.035]"
+          >
+            <img
+              src="/LOGO.png"
+              alt=""
+              className="h-[46rem] w-[46rem] object-contain brightness-0 invert"
+            />
+          </div>
 
-                <h2 className="mt-7 max-w-3xl font-sans text-4xl font-extrabold leading-[1.02] tracking-[-0.04em] sm:text-5xl lg:text-6xl">
-                  Your personal brand is not
-                  <span className="font-serif font-normal italic text-[#D9B896]">
-                    {" "}
-                    decoration.
-                  </span>
-                </h2>
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute right-[-9rem] top-1/2 z-0 h-[34rem] w-[34rem] -translate-y-1/2 rounded-full border border-[#F7F3EE]/[0.07]"
+          />
 
-                <p className="mt-7 max-w-2xl font-sans text-base leading-8 text-[#F7F3EE]/60">
-                  It is the perception created by your decisions, your
-                  behavior, your values, your visual language, and the
-                  consistency between them.
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute right-[8%] top-[20%] z-0 h-20 w-20 rounded-full border border-[#C8A256]/35"
+          />
+
+          <div className="relative z-10 mx-auto max-w-[1500px]">
+            <div className="mb-16 flex items-center justify-between">
+              <span className="font-sans text-[9px] font-bold uppercase tracking-[0.24em] text-[#F7F3EE]/40">
+                The Barandy principle
+              </span>
+
+              <span className="font-mono text-[8px] uppercase tracking-[0.2em] text-[#C8A256]">
+                Brand DNA™
+              </span>
+            </div>
+
+            <div className="grid gap-16 lg:grid-cols-[1.5fr_0.7fr] lg:items-end">
+              <h2 className="font-sans text-[clamp(4.5rem,10vw,11rem)] font-extrabold leading-[0.73] tracking-[-0.08em]">
+                Be
+                <br />
+                <span className="text-[#C8A256]">intentional.</span>
+              </h2>
+
+              <div className="max-w-[460px]">
+                <p className="font-sans text-lg leading-8 text-[#F7F3EE]/60 sm:text-xl">
+                  A strong personal brand is the consistency between what you
+                  believe, what you communicate, how you behave, and how others
+                  experience you.
                 </p>
 
-                <div className="mt-10">
-                  <Link
-                    href={isSignedIn ? "/dashboard" : "/sign-up"}
-                    className="group inline-flex items-center gap-3 border border-[#D9B896]/50 px-7 py-4 font-sans text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#D9B896] transition-all duration-300 hover:-translate-y-1 hover:border-[#D9B896] hover:bg-[#D9B896]/10"
-                  >
-                    {isSignedIn
-                      ? "View My Brand System"
-                      : "Discover My Brand DNA"}
+                <div className="mt-10 h-px w-full bg-[#F7F3EE]/15" />
 
-                    <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
-                  </Link>
-                </div>
-              </div>
-
-              <div className="relative flex min-h-[320px] items-center justify-center">
-                <div className="absolute h-[280px] w-[280px] rounded-full border border-[#D9B896]/20 animate-spin-slow" />
-
-                <div className="absolute h-[210px] w-[210px] rounded-full border border-[#F7F3EE]/10" />
-
-                <div className="relative flex h-32 w-32 items-center justify-center rounded-full border border-[#D9B896]/40 bg-[#D9B896]/5">
-                  <Sparkles className="h-8 w-8 text-[#D9B896]" />
-                </div>
+                <p className="mt-5 font-mono text-[8px] uppercase tracking-[0.18em] text-[#F7F3EE]/35">
+                  Identity → Perception → Positioning
+                </p>
               </div>
             </div>
           </div>
         </section>
 
-        {/* FINAL CTA */}
-        <section className="border-t border-[#171519]/10 bg-gradient-to-b from-[#F7F3EE] to-white">
-          <div className="mx-auto max-w-7xl px-6 py-24 text-center sm:px-8 lg:px-10 lg:py-32">
-            <div className="mx-auto max-w-3xl">
-              <span className="font-sans text-[10px] font-bold uppercase tracking-[0.3em] text-[#A98968]">
-                Your next layer
-              </span>
+        {/* ======================================================= */}
+        {/* BRAND DNA                                                */}
+        {/* ======================================================= */}
 
-              <h2 className="mt-6 font-sans text-4xl font-extrabold leading-[1.02] tracking-[-0.04em] sm:text-5xl lg:text-6xl">
-                Make your identity
-                <br />
-                <span className="font-serif font-normal italic text-[#A98968]">
-                  intentional.
-                </span>
-              </h2>
+        <section
+          id="brand-dna"
+          className="relative scroll-mt-28 overflow-hidden bg-[#F7F3EE]"
+        >
+          {/* LARGE WATERMARK */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute left-[-14rem] top-[24%] z-0 opacity-[0.035]"
+          >
+            <img
+              src="/LOGO.png"
+              alt=""
+              className="h-[45rem] w-[45rem] object-contain grayscale"
+            />
+          </div>
 
-              <p className="mx-auto mt-6 max-w-xl font-sans text-sm leading-7 text-[#171519]/55">
-                Start with the diagnostic. Discover the patterns behind your
-                identity and build a brand system around them.
+          {/* SMALL WATERMARK */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute bottom-[-8rem] right-[-6rem] z-0 opacity-[0.025]"
+          >
+            <img
+              src="/LOGO.png"
+              alt=""
+              className="h-[28rem] w-[28rem] object-contain grayscale"
+            />
+          </div>
+
+          <div className="relative z-10 mx-auto max-w-[1500px] px-6 py-24 sm:px-10 lg:px-20 lg:py-36">
+            <div className="grid items-end gap-10 lg:grid-cols-[1fr_0.65fr] lg:gap-20">
+              <div>
+                <p className="flex items-center gap-3 font-sans text-[9px] font-bold uppercase tracking-[0.25em] text-[#171519]/45">
+                  <span className="h-px w-9 bg-[#A98968]" />
+                  Inside Your Brand DNA
+                </p>
+
+                <h2 className="mt-8 max-w-[1000px] font-sans text-[clamp(3.4rem,7vw,7.5rem)] font-extrabold leading-[0.8] tracking-[-0.07em]">
+                  Seven layers.
+                  <br />
+                  <span className="font-serif font-normal italic text-[#A98968]">
+                    One identity.
+                  </span>
+                </h2>
+              </div>
+
+              <p className="max-w-xl pb-2 font-sans text-sm leading-7 text-[#171519]/55">
+                Your profile brings together the foundations of your identity
+                and a considered direction for expressing your personal brand.
+              </p>
+            </div>
+
+            <div className="mt-20 grid border-l border-t border-[#171519]/[0.12] sm:grid-cols-2 lg:grid-cols-4">
+              {brandElements.map((item, index) => (
+                <article
+                  key={item.number}
+                  className={`group relative min-h-[225px] border-b border-r border-[#171519]/[0.12] p-6 transition-all duration-300 hover:bg-white/65 sm:p-7 ${
+                    index === 0 || index === 6
+                      ? "bg-[#EDE4D9]/55"
+                      : "bg-transparent"
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono text-[9px] tracking-[0.18em] text-[#8F6D4D]">
+                      {item.number}
+                    </span>
+
+                    <span className="h-1.5 w-1.5 rounded-full bg-[#A98968]/60 transition-transform duration-300 group-hover:scale-150" />
+                  </div>
+
+                  <h3 className="mt-10 max-w-[210px] font-sans text-[11px] font-extrabold uppercase leading-5 tracking-[0.08em]">
+                    {item.title}
+                  </h3>
+
+                  <p className="mt-3 max-w-[250px] font-sans text-xs leading-6 text-[#171519]/50">
+                    {item.description}
+                  </p>
+
+                  <ArrowUpRight className="absolute bottom-6 right-6 h-4 w-4 opacity-20 transition-all duration-300 group-hover:-translate-y-1 group-hover:translate-x-1 group-hover:opacity-100" />
+                </article>
+              ))}
+            </div>
+
+            <div className="mt-16 grid border-y border-[#171519]/15 sm:grid-cols-2 lg:grid-cols-4">
+              {[
+                ["08", "Guided Questions"],
+                ["04", "Core Identity Pillars"],
+                ["05", "Color Intelligence Layers"],
+                ["01", "Strategic Brand Dossier"],
+              ].map(([number, label]) => (
+                <div
+                  key={label}
+                  className="border-b border-[#171519]/15 px-6 py-9 last:border-b-0 sm:px-7 lg:border-b-0 lg:border-r lg:last:border-r-0"
+                >
+                  <div className="font-sans text-5xl font-extrabold tracking-[-0.06em]">
+                    {number}
+                  </div>
+
+                  <div className="mt-3 font-sans text-[8px] font-bold uppercase tracking-[0.16em] text-[#171519]/40">
+                    {label}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-10 flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-center">
+              <p className="max-w-lg font-sans text-xs leading-6 text-[#171519]/50">
+                Seven connected dimensions. One clearer foundation for the way
+                you present your work.
               </p>
 
-              <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
-                <Link
-                  href={isSignedIn ? "/dashboard" : "/sign-up"}
-                  className="group inline-flex w-full items-center justify-center gap-3 bg-[#171519] px-8 py-4 font-sans text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#F7F3EE] transition-all duration-300 hover:-translate-y-1 hover:bg-[#2A262A] hover:shadow-xl sm:w-auto"
-                >
-                  {isSignedIn
-                    ? "Open My Dashboard"
-                    : "Begin Diagnostic Assessment"}
+              <Link
+                href={primaryHref}
+                className="group inline-flex min-h-14 w-full items-center justify-center gap-3 rounded-full bg-[#171519] px-7 font-sans text-[10px] font-extrabold uppercase tracking-[0.14em] text-[#F7F3EE] transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#332E31] sm:w-auto"
+              >
+                {isSignedIn
+                  ? "Go to Your Dashboard"
+                  : "Discover Your Brand"}
 
-                  <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
-                </Link>
+                <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+              </Link>
+            </div>
+          </div>
+        </section>
 
-                <a
-                  href="#methodology"
-                  className="inline-flex w-full items-center justify-center gap-3 border border-[#171519]/15 px-8 py-4 font-sans text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#171519]/65 transition-all duration-300 hover:border-[#171519]/30 hover:bg-white hover:text-[#171519] sm:w-auto"
-                >
-                  How It Works
-                  <ArrowDown className="h-4 w-4" />
-                </a>
+        {/* ======================================================= */}
+        {/* FINAL CTA                                                */}
+        {/* ======================================================= */}
+
+        <section
+          id="start"
+          className="relative overflow-hidden border-t border-[#171519]/10 bg-white px-6 py-24 sm:px-10 lg:px-20 lg:py-36"
+        >
+          {/* CENTRAL LOGO WATERMARK */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute left-1/2 top-1/2 z-0 -translate-x-1/2 -translate-y-1/2 opacity-[0.035]"
+          >
+            <img
+              src="/LOGO.png"
+              alt=""
+              className="h-[40rem] w-[40rem] object-contain grayscale"
+            />
+          </div>
+
+          {/* CORNER LOGO */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute -bottom-[9rem] -right-[7rem] z-0 opacity-[0.025]"
+          >
+            <img
+              src="/LOGO.png"
+              alt=""
+              className="h-[30rem] w-[30rem] object-contain grayscale"
+            />
+          </div>
+
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute left-[8%] top-[17%] z-0 h-3 w-3 rounded-full bg-[#C8A256]"
+          />
+
+          <div className="relative z-10 mx-auto max-w-[1500px]">
+            <div className="font-sans text-[9px] font-bold uppercase tracking-[0.24em] text-[#8F6D4D]">
+              Your next layer
+            </div>
+
+            <h2 className="mt-8 max-w-[1350px] font-sans text-[clamp(4rem,10vw,11rem)] font-extrabold leading-[0.73] tracking-[-0.08em]">
+              Make your
+              <br />
+              identity
+              <br />
+              <span className="font-serif font-normal italic text-[#A98968]">
+                intentional.
+              </span>
+            </h2>
+
+            <div className="mt-16 grid gap-10 border-t border-[#171519]/15 pt-8 lg:grid-cols-[1fr_auto] lg:items-end">
+              <div>
+                <p className="max-w-[580px] font-sans text-lg leading-8 text-[#171519]/55 sm:text-xl">
+                  Start with what makes your perspective yours. Build from
+                  there.
+                </p>
+
+                <div className="mt-5 flex flex-wrap gap-x-6 gap-y-3">
+                  <span className="font-mono text-[8px] uppercase tracking-[0.15em] text-[#171519]/35">
+                    Identity
+                  </span>
+
+                  <span className="font-mono text-[8px] uppercase tracking-[0.15em] text-[#171519]/35">
+                    Strategy
+                  </span>
+
+                  <span className="font-mono text-[8px] uppercase tracking-[0.15em] text-[#171519]/35">
+                    Expression
+                  </span>
+                </div>
               </div>
+
+              <Link
+                href={primaryHref}
+                className="group inline-flex min-h-14 w-full items-center justify-center gap-4 rounded-full bg-[#171519] px-8 font-sans text-[10px] font-extrabold uppercase tracking-[0.14em] text-[#F7F3EE] transition-all duration-300 hover:-translate-y-1 hover:bg-[#332E31] lg:w-auto"
+              >
+                {isSignedIn
+                  ? "Open My Dashboard"
+                  : "Begin Your Assessment"}
+
+                <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+              </Link>
             </div>
           </div>
         </section>
       </main>
 
-      {/* FOOTER */}
-      <footer className="border-t border-[#171519]/10 bg-[#F7F3EE]">
-        <div className="mx-auto flex max-w-7xl flex-col gap-5 px-6 py-8 sm:px-8 md:flex-row md:items-center md:justify-between lg:px-10">
-          <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center">
+      {/* ========================================================= */}
+      {/* FOOTER                                                     */}
+      {/* ========================================================= */}
+
+      <footer className="relative overflow-hidden border-t border-[#171519]/10 bg-[#F7F3EE]">
+        {/* FOOTER LOGO WATERMARK */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute right-[-5rem] top-1/2 z-0 -translate-y-1/2 opacity-[0.025]"
+        >
+          <img
+            src="/LOGO.png"
+            alt=""
+            className="h-[20rem] w-[20rem] object-contain grayscale"
+          />
+        </div>
+
+        <div className="relative z-10 mx-auto flex max-w-[1500px] flex-col gap-8 px-6 py-10 sm:px-10 md:flex-row md:items-end md:justify-between lg:px-20">
+          <Link
+            href="/"
+            aria-label="Barandy home"
+            className="group flex items-center gap-3"
+          >
+            <div className="h-10 w-10 transition-transform duration-300 group-hover:scale-105">
               <img
                 src="/LOGO.png"
-                alt="Barandly"
+                alt="Barandy"
                 className="h-full w-full object-contain"
               />
             </div>
 
             <div>
-              <div className="font-sans text-[10px] font-extrabold tracking-[0.18em]">
-                BARANDLY
+              <div className="font-sans text-sm font-extrabold tracking-[0.18em]">
+                BARANDY
               </div>
 
-              <div className="font-mono text-[7px] uppercase tracking-[0.2em] text-[#171519]/40">
+              <div className="mt-1 font-mono text-[7px] uppercase tracking-[0.22em] text-[#171519]/40">
                 Personal Brand Intelligence
               </div>
             </div>
-          </div>
+          </Link>
 
-          <div className="font-sans text-[9px] font-medium uppercase tracking-[0.12em] text-[#171519]/35">
-            © {new Date().getFullYear()} Barandly. All rights reserved.
+          <div className="flex flex-col gap-2 md:text-right">
+            <span className="font-sans text-[8px] font-bold uppercase tracking-[0.18em] text-[#171519]/35">
+              Brand Architecture
+            </span>
+
+            <span className="font-sans text-[9px] text-[#171519]/40">
+              © {new Date().getFullYear()} Barandy. All rights reserved.
+            </span>
           </div>
         </div>
       </footer>
 
-      {/* ANIMATIONS */}
+      {/* ========================================================= */}
+      {/* GLOBAL MOTION                                             */}
+      {/* ========================================================= */}
+
       <style>{`
-        @keyframes fade-in-up {
-          from {
-            opacity: 0;
-            transform: translateY(18px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        @keyframes soft-pulse {
-          0%,
-          100% {
-            opacity: 0.45;
-            transform: scale(1);
-          }
-
-          50% {
-            opacity: 0.8;
-            transform: scale(1.03);
-          }
-        }
-
-        @keyframes soft-ping {
-          0% {
-            opacity: 0.4;
-            transform: scale(1);
-          }
-
-          50% {
-            opacity: 1;
-            transform: scale(1.5);
-          }
-
-          100% {
-            opacity: 0.4;
-            transform: scale(1);
-          }
-        }
-
-        @keyframes float {
-          0%,
-          100% {
-            transform: translateY(0);
-          }
-
-          50% {
-            transform: translateY(-8px);
-          }
-        }
-
-        @keyframes spin-slow {
-          from {
-            transform: rotate(0deg);
-          }
-
-          to {
-            transform: rotate(360deg);
-          }
-        }
-
-        .animate-fade-in-up {
-          animation: fade-in-up 0.8s ease-out both;
-        }
-
-        .animate-soft-pulse {
-          animation: soft-pulse 5s ease-in-out infinite;
-        }
-
-        .animate-soft-ping {
-          animation: soft-ping 3s ease-in-out infinite;
-        }
-
-        .animate-float {
-          animation: float 4s ease-in-out infinite;
-        }
-
-        .animate-spin-slow {
-          animation: spin-slow 24s linear infinite;
-        }
-
-        .animation-delay-200 {
-          animation-delay: 200ms;
-        }
-
-        .animation-delay-2000 {
-          animation-delay: 2s;
-        }
-
         html {
           scroll-behavior: smooth;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          html {
+            scroll-behavior: auto;
+          }
+
+          *,
+          *::before,
+          *::after {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+          }
         }
       `}</style>
     </div>

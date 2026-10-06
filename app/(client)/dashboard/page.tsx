@@ -1,62 +1,36 @@
+
 import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
   ArrowRight,
-  ArrowUpRight,
   Check,
   Clock,
   LockKeyhole,
   Sparkles,
 } from "lucide-react";
+import { Manrope, DM_Sans } from "next/font/google";
 
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import ClientHeader from "@/components/layout/ClientHeader";
 
+const manrope = Manrope({
+  subsets: ["latin"],
+  variable: "--font-manrope",
+  display: "swap",
+});
+
+const dmSans = DM_Sans({
+  subsets: ["latin"],
+  variable: "--font-dm-sans",
+  display: "swap",
+});
+
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const TOTAL_ASSESSMENT_STEPS = 8;
-
-/* ---------------------------------------------------------
- * TIME-AWARE GREETING
- * --------------------------------------------------------- */
-function getTimeGreeting(): string {
-  const hour = new Date().getHours();
-  if (hour < 5) return "Working late";
-  if (hour < 12) return "Good morning";
-  if (hour < 18) return "Good afternoon";
-  return "Good evening";
-}
-
-/* ---------------------------------------------------------
- * RELATIVE TIME
- * --------------------------------------------------------- */
-function getRelativeTime(date: Date | null | undefined): string | null {
-  if (!date) return null;
-
-  const now = new Date();
-  const diffMs = now.getTime() - new Date(date).getTime();
-  const diffMins = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMs / 3600000);
-  const diffDays = Math.floor(diffMs / 86400000);
-
-  if (diffMins < 1) return "Just now";
-  if (diffMins < 60)
-    return `${diffMins} minute${diffMins === 1 ? "" : "s"} ago`;
-  if (diffHours < 24)
-    return `${diffHours} hour${diffHours === 1 ? "" : "s"} ago`;
-  if (diffDays < 7)
-    return `${diffDays} day${diffDays === 1 ? "" : "s"} ago`;
-  if (diffDays < 30)
-    return `${Math.floor(diffDays / 7)} week${Math.floor(diffDays / 7) === 1 ? "" : "s"} ago`;
-
-  return new Date(date).toLocaleDateString(undefined, {
-    month: "short",
-    day: "numeric",
-  });
-}
 
 export default async function ClientDashboard() {
   const session = await auth();
@@ -103,6 +77,7 @@ export default async function ClientDashboard() {
 
   const displayName =
     [user.firstName, user.lastName].filter(Boolean).join(" ") || "there";
+
   const firstName = user.firstName || displayName;
 
   const assessmentCompleted = assessment?.status === "COMPLETED";
@@ -118,48 +93,40 @@ export default async function ClientDashboard() {
     Math.round(((assessment?.progress ?? 0) / TOTAL_ASSESSMENT_STEPS) * 100)
   );
 
-  const timeGreeting = getTimeGreeting();
-  const lastUpdated = getRelativeTime(assessment?.updatedAt);
-
-  /* ---------------------------------------------------------
-   * PRIMARY ACTION
-   * --------------------------------------------------------- */
   let primaryAction = {
-    label: "Start your assessment",
+    label: "Start Assessment",
     href: "/assessment",
     description:
-      "A short, guided diagnostic of your values, purpose and brand archetype.",
+      "Discover the foundations of your personal brand through a guided assessment.",
   };
 
   if (assessmentInProgress) {
     primaryAction = {
-      label: "Continue your assessment",
+      label: "Continue Assessment",
       href: "/assessment",
-      description: `You're ${assessmentProgress}% through. Your progress is saved automatically.`,
+      description:
+        "Pick up where you left off. Your progress has been saved automatically.",
     };
   }
 
   if (assessmentCompleted && !accessGranted) {
     primaryAction = {
-      label: "Unlock your Brand DNA",
+      label: "Unlock Brand DNA",
       href: "/payment",
       description:
-        "Your assessment is complete. One step away from your strategic brand profile.",
+        "Your assessment is complete. Your personalized Brand DNA is ready.",
     };
   }
 
   if (assessmentCompleted && accessGranted) {
     primaryAction = {
-      label: "Explore your Brand DNA",
+      label: "Explore Brand DNA",
       href: "/results",
       description:
-        "Your strategic profile is ready — positioning, voice, archetype and direction.",
+        "Your personalized strategic profile is ready to explore.",
     };
   }
 
-  /* ---------------------------------------------------------
-   * JOURNEY STAGE
-   * --------------------------------------------------------- */
   const journeyStage = accessGranted
     ? 3
     : assessmentCompleted
@@ -170,12 +137,12 @@ export default async function ClientDashboard() {
 
   const stageStatus =
     journeyStage === 3
-      ? "Your journey is complete."
+      ? "Your Brand DNA is unlocked."
       : journeyStage === 2
         ? "Assessment complete — your Brand DNA is ready to unlock."
         : journeyStage === 1
           ? `Assessment in progress — ${assessmentProgress}% complete.`
-          : "Your journey starts with the assessment.";
+          : "Your journey starts with understanding your brand.";
 
   const steps = [
     {
@@ -195,397 +162,443 @@ export default async function ClientDashboard() {
     },
   ];
 
-  /* ---------------------------------------------------------
-   * PAYMENT STATUS MICROCOPY
-   * --------------------------------------------------------- */
-  const paymentStatusCopy = (() => {
-    if (!payment) return "One-time unlock";
-    switch (payment.status) {
-      case "PAID":
-        return "Payment received — awaiting approval";
-      case "PENDING":
-        return "Payment pending verification";
-      case "FAILED":
-        return "Payment requires attention";
-      default:
-        return "One-time unlock";
-    }
-  })();
-
   return (
-    <main className="min-h-screen bg-[#F8F5F1] text-[#171519]">
-      <ClientHeader firstName={user.firstName} currentPage="dashboard" />
+    <main
+      className={`${manrope.variable} ${dmSans.variable} min-h-screen bg-[#F8F5F1] text-[#171519]`}
+    >
+      <div className="font-[var(--font-dm-sans)]">
+        <ClientHeader
+          firstName={user.firstName}
+          currentPage="dashboard"
+        />
 
-      <div className="mx-auto max-w-5xl px-5 pb-20 pt-10 sm:px-6 md:pt-14 lg:px-8">
-        {/* =====================================================
-            HERO
-        ====================================================== */}
-        <section className="border-b border-black/10 pb-10 md:pb-12">
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-medium tracking-wide text-black/40">
-            <span>{timeGreeting}</span>
-            <span className="h-1 w-1 rounded-full bg-black/20" aria-hidden="true" />
-            <span className="text-black/35">{primaryAction.description}</span>
-          </div>
-
-          <h1 className="mt-3 max-w-2xl text-3xl font-semibold leading-[1.05] tracking-tight sm:text-4xl md:text-[2.75rem]">
-            Welcome back,{" "}
-            <span className="font-serif font-normal italic text-[#8B7653]">
-              {firstName}
-            </span>
-            .
-          </h1>
-
-          <div className="mt-7 flex flex-wrap items-center gap-4">
-            <Link
-              href={primaryAction.href}
-              className="group inline-flex min-h-[48px] items-center gap-3 bg-[#171519] px-6 py-3.5 text-sm font-medium text-white shadow-[0_1px_0_rgba(23,21,25,0.08)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-black hover:shadow-[0_8px_24px_rgba(23,21,25,0.15)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#8B7653]"
-            >
-              {primaryAction.label}
-              <ArrowRight
-                className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1"
-                strokeWidth={1.7}
-              />
-            </Link>
-
-            {assessmentCompleted && (
-              <Link
-                href="/assessment"
-                className="inline-flex min-h-[48px] items-center gap-1.5 text-sm font-medium text-black/50 underline-offset-4 transition-colors hover:text-black focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#8B7653]"
-              >
-                Review your answers
-                <ArrowUpRight className="h-3.5 w-3.5" strokeWidth={1.8} />
-              </Link>
-            )}
-          </div>
-        </section>
-
-        {/* =====================================================
-            STEPPER
-        ====================================================== */}
-        <section
-          className="mt-10 md:mt-12"
-          aria-label="Your progress through the Barandy journey"
-        >
-          <div className="flex items-center">
-            {steps.map((step, i) => (
-              <div
-                key={step.label}
-                className="flex flex-1 items-center last:flex-none"
-              >
-                <div className="flex flex-col items-center gap-2.5">
-                  <div
-                    className={`flex h-9 w-9 items-center justify-center rounded-full border text-xs font-semibold transition-all duration-300 ${
-                      step.done
-                        ? "border-[#171519] bg-[#171519] text-white shadow-[0_2px_8px_rgba(23,21,25,0.15)]"
-                        : step.current
-                          ? "border-[#8B7653] bg-white text-[#8B7653] ring-4 ring-[#8B7653]/10"
-                          : "border-black/15 bg-white text-black/30"
-                    }`}
-                    aria-hidden="true"
-                  >
-                    {step.done ? (
-                      <Check className="h-4 w-4" strokeWidth={2.4} />
-                    ) : (
-                      i + 1
-                    )}
-                  </div>
-                  <span
-                    className={`whitespace-nowrap text-xs font-medium transition-colors ${
-                      step.done
-                        ? "text-black/70"
-                        : step.current
-                          ? "text-[#8B7653]"
-                          : "text-black/35"
-                    }`}
-                  >
-                    {step.label}
-                  </span>
-                </div>
-                {i < steps.length - 1 && (
-                  <div
-                    className={`mx-3 h-px flex-1 transition-colors duration-500 ${
-                      steps[i + 1].done || steps[i + 1].current
-                        ? "bg-[#8B7653]/50"
-                        : "bg-black/10"
-                    }`}
-                    aria-hidden="true"
-                  />
-                )}
-              </div>
-            ))}
-          </div>
-
-          <p className="mt-4 text-xs text-black/40">{stageStatus}</p>
-        </section>
-
-        {/* =====================================================
-            STATUS CARDS
-        ====================================================== */}
-        <section className="mt-10 grid gap-4 md:mt-12 md:grid-cols-2">
-          {/* --------------------------------------------------
-              ASSESSMENT CARD
-          -------------------------------------------------- */}
-          <article className="flex flex-col border border-black/10 bg-white p-6 transition-colors duration-200 hover:border-black/20 md:p-7">
-            <div className="flex items-start justify-between gap-3">
-              <h2 className="text-lg font-semibold tracking-tight">
-                Assessment
-              </h2>
-              <StatusPill
-                label={
-                  assessmentCompleted
-                    ? "Completed"
-                    : assessmentInProgress
-                      ? "In progress"
-                      : "Not started"
-                }
-                tone={
-                  assessmentCompleted
-                    ? "done"
-                    : assessmentInProgress
-                      ? "active"
-                      : "idle"
-                }
-              />
-            </div>
-
-            <p className="mt-3 flex-1 text-sm leading-6 text-black/50">
-              {assessmentCompleted
-                ? "Your answers have been analyzed and saved securely."
-                : assessmentInProgress
-                  ? "Continue from where you stopped — your progress is saved automatically."
-                  : "A short, guided diagnostic of your values, purpose and personal brand archetype."}
-            </p>
-
-            {assessmentInProgress && (
-              <div className="mt-5">
-                <div className="h-1 overflow-hidden rounded-full bg-black/[0.06]">
-                  <div
-                    className="h-full rounded-full bg-[#171519] transition-all duration-700 ease-out"
-                    style={{ width: `${assessmentProgress}%` }}
-                  />
-                </div>
-                <div className="mt-2 flex items-center justify-between text-xs">
-                  <span className="text-black/40">
-                    {assessmentProgress}% complete
-                  </span>
-                  {lastUpdated && (
-                    <span className="text-black/30">{lastUpdated}</span>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {assessmentCompleted && lastUpdated && (
-              <p className="mt-4 text-xs text-black/35">
-                Completed {lastUpdated}
-              </p>
-            )}
-
-            <Link
-              href="/assessment"
-              className="group mt-6 inline-flex min-h-[44px] items-center gap-1.5 text-sm font-medium text-[#171519] underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#8B7653]"
-            >
-              {assessmentCompleted
-                ? "Review your answers"
-                : assessmentInProgress
-                  ? "Continue assessment"
-                  : "Begin assessment"}
-              <ArrowRight
-                className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5"
-                strokeWidth={1.8}
-              />
-            </Link>
-          </article>
-
-          {/* --------------------------------------------------
-              BRAND DNA CARD
-          -------------------------------------------------- */}
-          <article className="relative flex flex-col overflow-hidden border border-[#171519] bg-[#171519] p-6 text-white md:p-7">
-            {/* Subtle accent glow when unlocked */}
-            {accessGranted && (
-              <div
-                className="pointer-events-none absolute -right-20 -top-20 h-40 w-40 rounded-full bg-[#C9A876]/10 blur-3xl"
-                aria-hidden="true"
-              />
-            )}
-
-            <div className="relative flex items-start justify-between gap-3">
-              <h2 className="flex items-center gap-2 text-lg font-semibold tracking-tight">
-                Brand DNA
-                {accessGranted ? (
-                  <Sparkles
-                    className="h-4 w-4 text-[#C9A876]"
-                    strokeWidth={1.7}
-                    aria-hidden="true"
-                  />
-                ) : (
-                  <LockKeyhole
-                    className="h-4 w-4 text-white/40"
-                    strokeWidth={1.7}
-                    aria-hidden="true"
-                  />
-                )}
-              </h2>
-              <StatusPill
-                label={
-                  accessGranted
-                    ? "Unlocked"
-                    : brandDNAReady
-                      ? "Ready to unlock"
-                      : "Not ready"
-                }
-                tone={
-                  accessGranted ? "done" : brandDNAReady ? "active" : "idle"
-                }
-                dark
-              />
-            </div>
-
-            {accessGranted ? (
-              <>
-                <p className="relative mt-3 flex-1 text-sm leading-6 text-white/60">
-                  Your personalized strategic profile is ready — positioning,
-                  voice, archetype and direction, built from your answers.
+        <div className="mx-auto max-w-6xl px-5 pb-20 pt-8 sm:px-6 md:pt-12 lg:px-8">
+          {/* HERO */}
+          <section className="relative overflow-hidden border-b border-black/10 pb-10 md:pb-14">
+            <div className="relative z-10">
+              <div className="flex items-center gap-2">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#8B7653]" />
+                <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-black/40">
+                  Client dashboard
                 </p>
+              </div>
 
+              <h1 className="mt-5 max-w-3xl font-[var(--font-manrope)] text-4xl font-semibold leading-[1.05] tracking-[-0.045em] sm:text-5xl md:text-6xl">
+                Welcome,{" "}
+                <span className="font-medium text-[#8B7653]">
+                  {firstName}
+                </span>
+                .
+              </h1>
+
+              <p className="mt-5 max-w-xl text-sm leading-6 text-black/50 md:text-base md:leading-7">
+                {primaryAction.description}
+              </p>
+
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
                 <Link
-                  href="/results"
-                  className="group relative mt-6 inline-flex min-h-[44px] w-fit items-center gap-2 bg-white px-5 py-3 text-sm font-medium text-[#171519] transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/95 hover:shadow-[0_8px_24px_rgba(0,0,0,0.25)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                  href={primaryAction.href}
+                  className="group inline-flex min-h-[48px] w-fit items-center justify-center gap-3 bg-[#171519] px-6 py-3.5 text-sm font-medium text-white transition-all duration-200 hover:-translate-y-0.5 hover:bg-black focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#8B7653]"
                 >
-                  Explore my Brand DNA
+                  {primaryAction.label}
+
                   <ArrowRight
-                    className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5"
-                    strokeWidth={1.8}
+                    className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1"
+                    strokeWidth={1.7}
                   />
                 </Link>
-              </>
-            ) : (
-              <>
-                <p className="relative mt-3 text-sm leading-6 text-white/60">
-                  {brandDNAReady
-                    ? "Your Brand DNA has been generated. Unlock it to see:"
-                    : "Once your assessment is complete, your Brand DNA will include:"}
+
+                {assessmentCompleted && (
+                  <Link
+                    href="/assessment"
+                    className="inline-flex min-h-[48px] items-center justify-center px-5 py-3.5 text-sm font-medium text-black/50 transition-colors hover:text-[#171519]"
+                  >
+                    Review assessment
+                  </Link>
+                )}
+              </div>
+            </div>
+          </section>
+
+          {/* JOURNEY */}
+          <section
+            className="mt-10 md:mt-12"
+            aria-label="Your progress through the Barandy journey"
+          >
+            <div className="mb-5 flex items-end justify-between gap-4">
+              <div>
+                <p className="font-[var(--font-manrope)] text-sm font-semibold">
+                  Your journey
                 </p>
+                <p className="mt-1 text-xs text-black/40">
+                  {stageStatus}
+                </p>
+              </div>
 
-                <ul className="relative mt-4 space-y-2 text-sm text-white/55">
-                  <li className="flex items-start gap-2.5">
-                    <span
-                      className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-[#C9A876]"
-                      aria-hidden="true"
-                    />
-                    Your brand positioning and archetype
-                  </li>
-                  <li className="flex items-start gap-2.5">
-                    <span
-                      className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-[#C9A876]"
-                      aria-hidden="true"
-                    />
-                    Your strategic voice and tone
-                  </li>
-                  <li className="flex items-start gap-2.5">
-                    <span
-                      className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-[#C9A876]"
-                      aria-hidden="true"
-                    />
-                    A personalized direction to act on
-                  </li>
-                </ul>
+              {assessmentInProgress && (
+                <span className="text-xs font-medium text-[#8B7653]">
+                  {assessmentProgress}%
+                </span>
+              )}
+            </div>
 
-                <div className="relative mt-6 flex flex-1 items-end">
-                  <div className="w-full">
+            <div className="flex items-center">
+              {steps.map((step, i) => (
+                <div
+                  key={step.label}
+                  className="flex flex-1 items-center last:flex-none"
+                >
+                  <div className="flex flex-col items-center gap-2">
+                    <div
+                      className={`flex h-9 w-9 items-center justify-center rounded-full border text-xs font-medium transition-all ${
+                        step.done
+                          ? "border-[#171519] bg-[#171519] text-white"
+                          : step.current
+                            ? "border-[#8B7653] bg-white text-[#8B7653] shadow-[0_0_0_4px_rgba(139,118,83,0.08)]"
+                            : "border-black/10 bg-white text-black/25"
+                      }`}
+                    >
+                      {step.done ? (
+                        <Check
+                          className="h-4 w-4"
+                          strokeWidth={2}
+                        />
+                      ) : (
+                        i + 1
+                      )}
+                    </div>
+
+                    <span
+                      className={`text-xs ${
+                        step.done || step.current
+                          ? "font-medium text-black/70"
+                          : "text-black/30"
+                      }`}
+                    >
+                      {step.label}
+                    </span>
+                  </div>
+
+                  {i < steps.length - 1 && (
+                    <div
+                      className={`mx-3 h-px flex-1 transition-colors ${
+                        steps[i + 1].done || steps[i + 1].current
+                          ? "bg-[#8B7653]/40"
+                          : "bg-black/10"
+                      }`}
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* STATUS CARDS */}
+          <section className="mt-10 grid gap-5 md:mt-12 md:grid-cols-2">
+            {/* ASSESSMENT */}
+            <article className="group border border-black/10 bg-white p-6 transition-all duration-200 hover:-translate-y-0.5 hover:border-black/15 hover:shadow-[0_12px_40px_rgba(23,21,25,0.05)] md:p-7">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-black/35">
+                    Step 01
+                  </p>
+
+                  <h2 className="mt-2 font-[var(--font-manrope)] text-xl font-semibold tracking-[-0.025em]">
+                    Assessment
+                  </h2>
+                </div>
+
+                <StatusPill
+                  label={
+                    assessmentCompleted
+                      ? "Completed"
+                      : assessmentInProgress
+                        ? "In progress"
+                        : "Not started"
+                  }
+                  tone={
+                    assessmentCompleted
+                      ? "done"
+                      : assessmentInProgress
+                        ? "active"
+                        : "idle"
+                  }
+                />
+              </div>
+
+              <p className="mt-4 max-w-md text-sm leading-6 text-black/50">
+                {assessmentCompleted
+                  ? "Your answers have been analyzed and saved securely."
+                  : assessmentInProgress
+                    ? "Continue from where you stopped. Your progress is saved automatically."
+                    : "A guided diagnostic of your values, purpose and personal brand archetype."}
+              </p>
+
+              {assessmentInProgress && (
+                <div className="mt-6">
+                  <div className="flex items-center justify-between text-[11px] text-black/35">
+                    <span>Progress</span>
+                    <span>{assessmentProgress}%</span>
+                  </div>
+
+                  <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-black/[0.06]">
+                    <div
+                      className="h-full rounded-full bg-[#171519] transition-all duration-500"
+                      style={{ width: `${assessmentProgress}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              <Link
+                href="/assessment"
+                className="group/link mt-7 inline-flex min-h-[44px] items-center gap-2 text-sm font-medium text-[#171519]"
+              >
+                {assessmentCompleted
+                  ? "Review your answers"
+                  : assessmentInProgress
+                    ? "Continue assessment"
+                    : "Begin assessment"}
+
+                <ArrowRight
+                  className="h-3.5 w-3.5 transition-transform group-hover/link:translate-x-1"
+                  strokeWidth={1.8}
+                />
+              </Link>
+            </article>
+
+            {/* BRAND DNA */}
+            <article className="group relative overflow-hidden border border-[#171519] bg-[#171519] p-6 text-white md:p-7">
+              <div className="absolute right-0 top-0 h-40 w-40 translate-x-1/3 -translate-y-1/3 rounded-full border border-white/[0.04]" />
+
+              <div className="relative">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-white/30">
+                      Step 02
+                    </p>
+
+                    <h2 className="mt-2 flex items-center gap-2 font-[var(--font-manrope)] text-xl font-semibold tracking-[-0.025em]">
+                      Brand DNA
+
+                      {accessGranted ? (
+                        <Sparkles
+                          className="h-4 w-4 text-[#C9A876]"
+                          strokeWidth={1.7}
+                        />
+                      ) : (
+                        <LockKeyhole
+                          className="h-4 w-4 text-white/30"
+                          strokeWidth={1.7}
+                        />
+                      )}
+                    </h2>
+                  </div>
+
+                  <StatusPill
+                    label={
+                      accessGranted
+                        ? "Unlocked"
+                        : brandDNAReady
+                          ? "Ready to unlock"
+                          : "Not ready"
+                    }
+                    tone={
+                      accessGranted
+                        ? "done"
+                        : brandDNAReady
+                          ? "active"
+                          : "idle"
+                    }
+                    dark
+                  />
+                </div>
+
+                {accessGranted ? (
+                  <>
+                    <p className="mt-4 max-w-md text-sm leading-6 text-white/50">
+                      Your personalized strategic profile is ready — positioning,
+                      voice, archetype and direction, built from your answers.
+                    </p>
+
+                    <Link
+                      href="/results"
+                      className="group/cta mt-7 inline-flex min-h-[46px] items-center gap-2 bg-white px-5 py-3 text-sm font-medium text-[#171519] transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/90"
+                    >
+                      Explore my Brand DNA
+
+                      <ArrowRight
+                        className="h-3.5 w-3.5 transition-transform group-hover/cta:translate-x-1"
+                        strokeWidth={1.8}
+                      />
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    <p className="mt-4 max-w-md text-sm leading-6 text-white/50">
+                      {brandDNAReady
+                        ? "Your Brand DNA has been generated. Unlock it to access your personalized profile."
+                        : "Complete your assessment to generate your personalized Brand DNA."}
+                    </p>
+
+                    <ul className="mt-5 space-y-2.5 text-sm text-white/45">
+                      <li className="flex items-center gap-2.5">
+                        <span className="h-1 w-1 rounded-full bg-[#C9A876]" />
+                        Brand positioning and archetype
+                      </li>
+
+                      <li className="flex items-center gap-2.5">
+                        <span className="h-1 w-1 rounded-full bg-[#C9A876]" />
+                        Strategic voice and tone
+                      </li>
+
+                      <li className="flex items-center gap-2.5">
+                        <span className="h-1 w-1 rounded-full bg-[#C9A876]" />
+                        Personalized direction
+                      </li>
+                    </ul>
+
                     {brandDNAReady && (
-                      <div className="mb-4 flex items-baseline justify-between border-t border-white/10 pt-4">
-                        <p className="text-xs text-white/40">
-                          {paymentStatusCopy}
-                        </p>
-                        <p className="text-lg font-semibold tabular-nums">
-                          {payment?.amount ?? 100}{" "}
-                          <span className="text-xs font-normal text-white/40">
-                            {payment?.currency ?? "TND"}
-                          </span>
-                        </p>
+                      <div className="mt-6 flex items-center justify-between border-t border-white/10 pt-5">
+                        <div>
+                          <p className="text-xs text-white/35">
+                            {payment?.status === "PAID"
+                              ? "Payment received — awaiting approval"
+                              : payment?.status === "PENDING"
+                                ? "Payment pending verification"
+                                : payment?.status === "FAILED"
+                                  ? "Payment requires attention"
+                                  : "One-time unlock"}
+                          </p>
+
+                          <p className="mt-1 font-[var(--font-manrope)] text-xl font-semibold">
+                            {payment?.amount ?? 100}{" "}
+                            <span className="text-xs font-normal text-white/35">
+                              {payment?.currency ?? "TND"}
+                            </span>
+                          </p>
+                        </div>
                       </div>
                     )}
 
                     <Link
                       href={brandDNAReady ? "/payment" : "/assessment"}
-                      className="group inline-flex min-h-[44px] items-center gap-2 border border-white/25 px-5 py-3 text-sm font-medium text-white transition-all duration-200 hover:border-white/50 hover:bg-white/[0.06] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                      className="group/cta mt-7 inline-flex min-h-[46px] items-center gap-2 border border-white/20 px-5 py-3 text-sm font-medium text-white transition-all duration-200 hover:-translate-y-0.5 hover:border-white/40 hover:bg-white/[0.06]"
                     >
                       {brandDNAReady
                         ? "Unlock Brand DNA"
                         : "Complete assessment first"}
+
                       <ArrowRight
-                        className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5"
+                        className="h-3.5 w-3.5 transition-transform group-hover/cta:translate-x-1"
                         strokeWidth={1.8}
                       />
                     </Link>
-                  </div>
-                </div>
-              </>
-            )}
-          </article>
-        </section>
+                  </>
+                )}
+              </div>
+            </article>
+          </section>
 
-        {/* =====================================================
-            FOOTER
-        ====================================================== */}
-        <footer className="mt-16 flex flex-col items-center justify-between gap-6 border-t border-black/10 pt-6 sm:flex-row sm:gap-4">
-          <div className="flex items-center gap-3">
-            <Image
-              src="/LOGO.png"
-              alt="Barandy"
-              width={80}
-              height={30}
-              className="h-auto w-16 opacity-60"
-            />
-            <span className="text-xs text-black/35">
-              Personal Brand Intelligence
-            </span>
-          </div>
+          {/* FINAL CTA */}
+          <section className="mt-8 border border-black/10 bg-[#ECE7E0] p-6 md:mt-10 md:p-8">
+            <div className="flex flex-col justify-between gap-6 md:flex-row md:items-center">
+              <div>
+                <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-black/35">
+                  Your next move
+                </p>
 
-          <nav
-            aria-label="Dashboard navigation"
-            className="flex flex-wrap items-center gap-x-5 gap-y-2"
-          >
-            <FooterLink href="/dashboard">Dashboard</FooterLink>
-            <FooterLink href="/assessment">Assessment</FooterLink>
-            {assessmentCompleted && (
-              <FooterLink href="/payment">Payment</FooterLink>
-            )}
-            {accessGranted && (
-              <FooterLink href="/results">Brand DNA</FooterLink>
-            )}
-            <FooterLink href="/">Home</FooterLink>
-          </nav>
-        </footer>
+                <h2 className="mt-2 max-w-xl font-[var(--font-manrope)] text-xl font-semibold tracking-[-0.025em] md:text-2xl">
+                  {accessGranted
+                    ? "Your Brand DNA is ready. Start putting it into action."
+                    : assessmentCompleted
+                      ? "Your assessment is done. Unlock your Brand DNA."
+                      : assessmentInProgress
+                        ? "You're already on your way."
+                        : "Start discovering what makes your brand yours."}
+                </h2>
+              </div>
+
+              <Link
+                href={primaryAction.href}
+                className="group inline-flex min-h-[46px] shrink-0 items-center justify-center gap-3 bg-[#171519] px-6 py-3.5 text-sm font-medium text-white transition-all duration-200 hover:-translate-y-0.5 hover:bg-black"
+              >
+                {primaryAction.label}
+
+                <ArrowRight
+                  className="h-4 w-4 transition-transform group-hover:translate-x-1"
+                  strokeWidth={1.7}
+                />
+              </Link>
+            </div>
+          </section>
+
+          {/* FOOTER */}
+          <footer className="mt-14 flex flex-col items-center justify-between gap-4 border-t border-black/10 pt-6 sm:flex-row">
+            <div className="flex items-center gap-3">
+              <Image
+                src="/LOGO.png"
+                alt="Barandy"
+                width={80}
+                height={30}
+                className="h-auto w-16 opacity-60"
+              />
+
+              <span className="text-xs text-black/35">
+                Personal Brand Intelligence
+              </span>
+            </div>
+
+            <nav
+              aria-label="Dashboard navigation"
+              className="flex flex-wrap gap-x-5 gap-y-2"
+            >
+              <Link
+                href="/dashboard"
+                className="text-xs text-black/40 transition hover:text-black"
+              >
+                Dashboard
+              </Link>
+
+              <Link
+                href="/assessment"
+                className="text-xs text-black/40 transition hover:text-black"
+              >
+                Assessment
+              </Link>
+
+              {assessmentCompleted && (
+                <Link
+                  href="/payment"
+                  className="text-xs text-black/40 transition hover:text-black"
+                >
+                  Payment
+                </Link>
+              )}
+
+              {accessGranted && (
+                <Link
+                  href="/results"
+                  className="text-xs text-black/40 transition hover:text-black"
+                >
+                  Brand DNA
+                </Link>
+              )}
+
+              <Link
+                href="/"
+                className="text-xs text-black/40 transition hover:text-black"
+              >
+                Home
+              </Link>
+            </nav>
+          </footer>
+        </div>
       </div>
     </main>
   );
 }
 
-/* ============================================================
-   FOOTER LINK
-============================================================ */
-function FooterLink({
-  href,
-  children,
-}: {
-  href: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <Link
-      href={href}
-      className="text-xs text-black/40 transition-colors hover:text-black focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#8B7653]"
-    >
-      {children}
-    </Link>
-  );
-}
-
-/* ============================================================
-   STATUS PILL
-============================================================ */
 function StatusPill({
   label,
   tone,
@@ -597,7 +610,7 @@ function StatusPill({
 }) {
   const styles = dark
     ? {
-        done: "bg-white/10 text-white/85",
+        done: "bg-white/10 text-white/80",
         active: "bg-[#C9A876]/15 text-[#C9A876]",
         idle: "bg-white/[0.06] text-white/40",
       }
@@ -609,15 +622,26 @@ function StatusPill({
 
   return (
     <span
-      className={`inline-flex shrink-0 items-center gap-1.5 px-2.5 py-1 text-[11px] font-medium tracking-wide ${styles[tone]}`}
+      className={`inline-flex shrink-0 items-center gap-1.5 px-2.5 py-1.5 text-[11px] font-medium ${styles[tone]}`}
     >
       {tone === "done" && (
-        <Check className="h-3 w-3" strokeWidth={2.4} aria-hidden="true" />
+        <Check
+          className="h-3 w-3"
+          strokeWidth={2}
+          aria-hidden="true"
+        />
       )}
+
       {tone === "active" && (
-        <Clock className="h-3 w-3" strokeWidth={2.2} aria-hidden="true" />
+        <Clock
+          className="h-3 w-3"
+          strokeWidth={2}
+          aria-hidden="true"
+        />
       )}
+
       {label}
     </span>
   );
 }
+
