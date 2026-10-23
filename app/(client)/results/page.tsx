@@ -133,7 +133,15 @@ export default async function ResultsPage() {
     select: {
       firstName: true,
       accessGranted: true,
-
+      payments: {
+        orderBy: {
+          createdAt: "desc",
+        },
+        take: 1,
+        select: {
+          status: true,
+        },
+      },
       assessments: {
         where: {
           status: "COMPLETED",
@@ -143,6 +151,7 @@ export default async function ResultsPage() {
         },
         take: 1,
         select: {
+          answers: true,
           result: {
             select: {
               brandDNA: true,
@@ -164,6 +173,67 @@ export default async function ResultsPage() {
   }
 
   const brandDNA = assessment.result.brandDNA as BrandDNA;
+  const rawAnswers =
+    assessment.answers &&
+    typeof assessment.answers === "object" &&
+    !Array.isArray(assessment.answers)
+      ? (assessment.answers as Record<string, unknown>)
+      : {};
+
+  const selectedValues = Array.isArray(rawAnswers.selectedValues)
+    ? rawAnswers.selectedValues
+        .filter((value): value is string => typeof value === "string")
+        .map((value) => formatLabel(value))
+    : [];
+
+  const archetypeNames = [
+    typeof rawAnswers.primaryArchetypeId === "string"
+      ? formatLabel(rawAnswers.primaryArchetypeId)
+      : "",
+    typeof rawAnswers.secondaryArchetypeId === "string"
+      ? formatLabel(rawAnswers.secondaryArchetypeId)
+      : "",
+  ].filter(Boolean);
+
+  const previewItems = [
+    {
+      number: "01",
+      question: "How should we define your professional identity?",
+      answer:
+        typeof rawAnswers.personName === "string" && rawAnswers.personName.trim()
+          ? rawAnswers.personName.trim()
+          : "Your response is saved",
+    },
+    {
+      number: "02",
+      question: "What do you stand for?",
+      answer: selectedValues.length ? selectedValues.join(" · ") : "Your response is saved",
+    },
+    {
+      number: "03",
+      question: "Which identity feels most like you?",
+      answer: archetypeNames.length ? archetypeNames.join(" + ") : "Your response is saved",
+    },
+    {
+      number: "04",
+      question: "What is your purpose?",
+      answer:
+        typeof rawAnswers.purpose === "string" && rawAnswers.purpose.trim()
+          ? rawAnswers.purpose.trim()
+          : "Your response is saved",
+    },
+    {
+      number: "05",
+      question: "What do you want to become known for?",
+      answer:
+        typeof rawAnswers.vision === "string" && rawAnswers.vision.trim()
+          ? rawAnswers.vision.trim()
+          : "Your response is saved",
+    },
+  ];
+
+  const hasPremiumAccess =
+    user.accessGranted || user.payments[0]?.status === "PAID";
 
   /*
    * =========================================================
@@ -171,7 +241,7 @@ export default async function ResultsPage() {
    * =========================================================
    */
 
-  if (!user.accessGranted) {
+  if (!hasPremiumAccess) {
     return (
       <div className="min-h-screen bg-[#F8F5F1] text-[#171519]">
         <ClientHeader
@@ -227,6 +297,45 @@ export default async function ResultsPage() {
                   </div>
                 </div>
               </div>
+
+              {/* --------------------------------------------------
+                  FREE PREVIEW — first five assessment questions
+              -------------------------------------------------- */}
+              <section className="border-t border-black/10 bg-[#FBF9F6] px-7 py-9 md:px-14 md:py-12">
+                <div className="max-w-2xl">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#8B7653]">
+                    Your free preview
+                  </p>
+                  <h2 className="mt-3 text-2xl font-medium tracking-[-0.03em] md:text-3xl">
+                    Your first five answers.
+                  </h2>
+                  <p className="mt-3 text-sm leading-6 text-black/50">
+                    Your responses are saved. Unlock your Brand DNA to access
+                    the complete interpretation, positioning, and strategic recommendations.
+                  </p>
+                </div>
+
+                <div className="mt-8 grid gap-3 sm:grid-cols-2">
+                  {previewItems.map((item) => (
+                    <article
+                      key={item.number}
+                      className="min-w-0 border border-black/10 bg-white p-5"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="font-mono text-[10px] text-[#8B7653]">
+                          {item.number}
+                        </span>
+                        <h3 className="text-xs font-semibold leading-5 text-black/65">
+                          {item.question}
+                        </h3>
+                      </div>
+                      <p className="mt-4 break-words text-sm leading-6 text-[#171519]">
+                        {item.answer}
+                      </p>
+                    </article>
+                  ))}
+                </div>
+              </section>
 
               {/* --------------------------------------------------
                   PAYWALL CTA
