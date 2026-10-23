@@ -142,6 +142,7 @@ export default async function ResultsPage() {
           status: true,
         },
       },
+
       assessments: {
         where: {
           status: "COMPLETED",
@@ -151,7 +152,6 @@ export default async function ResultsPage() {
         },
         take: 1,
         select: {
-          answers: true,
           result: {
             select: {
               brandDNA: true,
@@ -173,64 +173,80 @@ export default async function ResultsPage() {
   }
 
   const brandDNA = assessment.result.brandDNA as BrandDNA;
-  const rawAnswers =
-    assessment.answers &&
-    typeof assessment.answers === "object" &&
-    !Array.isArray(assessment.answers)
-      ? (assessment.answers as Record<string, unknown>)
-      : {};
 
-  const selectedValues = Array.isArray(rawAnswers.selectedValues)
-    ? rawAnswers.selectedValues
-        .filter((value): value is string => typeof value === "string")
-        .map((value) => formatLabel(value))
-    : [];
+  // Keep the free preview focused on structured Brand DNA findings.
+  // Avoid free-form generated copy here because it can echo weak/raw answers.
+  const uniqueLabels = (items: string[]) => {
+    const seen = new Set<string>();
+    return items
+      .map((item) => item.trim())
+      .filter((item) => {
+        if (!item) return false;
+        const key = item.toLocaleLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+  };
 
-  const archetypeNames = [
-    typeof rawAnswers.primaryArchetypeId === "string"
-      ? formatLabel(rawAnswers.primaryArchetypeId)
-      : "",
-    typeof rawAnswers.secondaryArchetypeId === "string"
-      ? formatLabel(rawAnswers.secondaryArchetypeId)
-      : "",
-  ].filter(Boolean);
+  const voiceTonePreview = uniqueLabels(toArray(brandDNA.voice?.tone));
+  const voiceStylePreview = uniqueLabels(toArray(brandDNA.voice?.style));
+  const communicationStyle = (
+    voiceTonePreview.length > 0 ? voiceTonePreview : voiceStylePreview
+  ).join(" · ");
 
-  const previewItems = [
+  const previewCandidates: {
+    number: string;
+    eyebrow: string;
+    title: string;
+    value: string | null;
+  }[] = [
     {
       number: "01",
-      question: "How should we define your professional identity?",
-      answer:
-        typeof rawAnswers.personName === "string" && rawAnswers.personName.trim()
-          ? rawAnswers.personName.trim()
-          : "Your response is saved",
+      eyebrow: "CORE IDENTITY",
+      title: "Your primary archetype",
+      value: brandDNA.primaryArchetype
+        ? [
+            brandDNA.primaryArchetype.name ||
+              formatLabel(brandDNA.primaryArchetype.id),
+            brandDNA.primaryArchetype.motto,
+          ]
+            .filter(Boolean)
+            .join(" — ") || null
+        : null,
     },
     {
       number: "02",
-      question: "What do you stand for?",
-      answer: selectedValues.length ? selectedValues.join(" · ") : "Your response is saved",
+      eyebrow: "SUPPORTING ENERGY",
+      title: "Your secondary archetype",
+      value: brandDNA.secondaryArchetype
+        ? [
+            brandDNA.secondaryArchetype.name ||
+              formatLabel(brandDNA.secondaryArchetype.id),
+            brandDNA.secondaryArchetype.motto,
+          ]
+            .filter(Boolean)
+            .join(" — ") || null
+        : null,
     },
     {
       number: "03",
-      question: "Which identity feels most like you?",
-      answer: archetypeNames.length ? archetypeNames.join(" + ") : "Your response is saved",
+      eyebrow: "WHAT YOU STAND FOR",
+      title: "Your core values",
+      value: uniqueLabels(toArray(brandDNA.values)).join(" · ") || null,
     },
     {
       number: "04",
-      question: "What is your purpose?",
-      answer:
-        typeof rawAnswers.purpose === "string" && rawAnswers.purpose.trim()
-          ? rawAnswers.purpose.trim()
-          : "Your response is saved",
-    },
-    {
-      number: "05",
-      question: "What do you want to become known for?",
-      answer:
-        typeof rawAnswers.vision === "string" && rawAnswers.vision.trim()
-          ? rawAnswers.vision.trim()
-          : "Your response is saved",
+      eyebrow: "HOW YOU SHOW UP",
+      title: "Your communication style",
+      value: communicationStyle || null,
     },
   ];
+
+  const previewItems = previewCandidates.filter(
+    (item): item is { number: string; eyebrow: string; title: string; value: string } =>
+      Boolean(item.value?.trim())
+  );
 
   const hasPremiumAccess =
     user.accessGranted || user.payments[0]?.status === "PAID";
@@ -299,42 +315,65 @@ export default async function ResultsPage() {
               </div>
 
               {/* --------------------------------------------------
-                  FREE PREVIEW — first five assessment questions
+                  FREE PREVIEW — structured Brand DNA insights
               -------------------------------------------------- */}
-              <section className="border-t border-black/10 bg-[#FBF9F6] px-7 py-9 md:px-14 md:py-12">
-                <div className="max-w-2xl">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#8B7653]">
-                    Your free preview
-                  </p>
-                  <h2 className="mt-3 text-2xl font-medium tracking-[-0.03em] md:text-3xl">
-                    Your first five answers.
-                  </h2>
-                  <p className="mt-3 text-sm leading-6 text-black/50">
-                    Your responses are saved. Unlock your Brand DNA to access
-                    the complete interpretation, positioning, and strategic recommendations.
-                  </p>
+              <section className="border-t border-black/10 bg-[#FBF9F6] px-6 py-10 sm:px-8 md:px-14 md:py-14">
+                <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+                  <div className="max-w-2xl">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#8B7653]">
+                      A first look at your profile
+                    </p>
+
+                    <h2 className="mt-3 text-2xl font-medium tracking-[-0.04em] text-[#171519] sm:text-3xl">
+                      Your Brand DNA, revealed.
+                    </h2>
+
+                    <p className="mt-3 max-w-xl text-sm leading-6 text-black/55">
+                      Start with the foundations of your brand: its archetypes,
+                      values, and communication style. Your complete analysis
+                      and strategic recommendations remain private until you unlock it.
+                    </p>
+                  </div>
+
+                  <span className="inline-flex w-fit shrink-0 items-center gap-2 border border-[#8B7653]/25 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8B7653]">
+                    <Sparkles className="h-3.5 w-3.5" strokeWidth={1.7} />
+                    Personalised insights
+                  </span>
                 </div>
 
-                <div className="mt-8 grid gap-3 sm:grid-cols-2">
-                  {previewItems.map((item) => (
-                    <article
-                      key={item.number}
-                      className="min-w-0 border border-black/10 bg-white p-5"
-                    >
-                      <div className="flex items-center gap-3">
-                        <span className="font-mono text-[10px] text-[#8B7653]">
-                          {item.number}
-                        </span>
-                        <h3 className="text-xs font-semibold leading-5 text-black/65">
-                          {item.question}
-                        </h3>
-                      </div>
-                      <p className="mt-4 break-words text-sm leading-6 text-[#171519]">
-                        {item.answer}
-                      </p>
-                    </article>
-                  ))}
-                </div>
+                {previewItems.length > 0 ? (
+                  <div className="mt-8 grid gap-3 sm:grid-cols-2">
+                    {previewItems.map((item) => (
+                      <article
+                        key={item.number}
+                        className="group min-w-0 border border-black/10 bg-white p-5 transition-colors duration-200 hover:border-[#8B7653]/45 sm:p-6"
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <div>
+                            <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-[#8B7653]">
+                              {item.eyebrow}
+                            </p>
+                            <h3 className="mt-2 text-sm font-semibold leading-5 text-[#171519]">
+                              {item.title}
+                            </h3>
+                          </div>
+                          <span className="font-mono text-[10px] text-black/30">
+                            {item.number}
+                          </span>
+                        </div>
+
+                        <p className="mt-5 break-words text-sm leading-6 text-black/65">
+                          {item.value}
+                        </p>
+                      </article>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="mt-8 border border-black/10 bg-white p-5 text-sm leading-6 text-black/55">
+                    Your assessment is saved. Unlock your complete Brand DNA
+                    report to explore your personalized analysis.
+                  </p>
+                )}
               </section>
 
               {/* --------------------------------------------------

@@ -1030,54 +1030,36 @@ export default function AssessmentFlow() {
     });
   }
 
+  // Primary and secondary are two distinct single-choice selections.
+  // Clicking the already-selected card keeps it selected; choose another
+  // card to change it. The same archetype can never occupy both positions.
   function selectArchetype(archetypeId: string) {
-    if (isReviewMode) {
-      return;
-    }
+    if (isReviewMode) return;
 
     setDraft((current) => {
-      if (
-        current.primaryArchetypeId === archetypeId
-      ) {
-        return {
-          ...current,
-          primaryArchetypeId: "",
-        };
+      if (current.primaryArchetypeId === archetypeId) {
+        return current;
       }
 
       return {
         ...current,
         primaryArchetypeId: archetypeId,
         secondaryArchetypeId:
-          current.secondaryArchetypeId ===
-          archetypeId
+          current.secondaryArchetypeId === archetypeId
             ? ""
             : current.secondaryArchetypeId,
       };
     });
   }
 
-  function selectSecondaryArchetype(
-    archetypeId: string
-  ) {
-    if (isReviewMode) {
-      return;
-    }
+  function selectSecondaryArchetype(archetypeId: string) {
+    if (isReviewMode) return;
 
     setDraft((current) => {
       if (
-        current.secondaryArchetypeId ===
-        archetypeId
-      ) {
-        return {
-          ...current,
-          secondaryArchetypeId: "",
-        };
-      }
-
-      if (
-        current.primaryArchetypeId ===
-        archetypeId
+        !archetypeId ||
+        current.primaryArchetypeId === archetypeId ||
+        current.secondaryArchetypeId === archetypeId
       ) {
         return current;
       }
@@ -1131,7 +1113,8 @@ export default function AssessmentFlow() {
       case "archetypes":
         return (
           draft.primaryArchetypeId !== "" &&
-          draft.secondaryArchetypeId !== ""
+          draft.secondaryArchetypeId !== "" &&
+          draft.primaryArchetypeId !== draft.secondaryArchetypeId
         );
       case "purpose":
         return draft.purpose.trim().length > 0;
@@ -1456,7 +1439,7 @@ export default function AssessmentFlow() {
                     onClick={() => toggleValue(value.id)}
                     disabled={disabled || isReviewMode}
                     aria-pressed={selected}
-                    className={`group relative flex min-h-[200px] flex-col justify-between border p-6 text-left transition-all duration-300 ${
+                    className={`group relative min-h-[180px] border p-6 pb-7 text-left transition-all duration-300 ${
                       selected
                         ? "border-[#171519] bg-[#171519] text-white shadow-[0_12px_30px_rgba(23,21,25,0.08)]"
                         : disabled || isReviewMode
@@ -1491,34 +1474,32 @@ export default function AssessmentFlow() {
                       </span>
                     </div>
 
-                    <div className="mt-8">
-                      <h3 className="text-lg font-semibold tracking-tight">
-                        {language === "fr"
-                          ? VALUE_COPY[value.id]?.fr ??
-                            value.name
-                          : value.name}
-                      </h3>
+                    <h3 className="mt-9 text-lg font-semibold tracking-tight">
+                      {language === "fr"
+                        ? VALUE_COPY[value.id]?.fr ??
+                          value.name
+                        : value.name}
+                    </h3>
 
-                      <p
-                        className={`mt-3 text-sm leading-6 ${
-                          selected
-                            ? "text-white/60"
-                            : "text-black/50"
-                        }`}
-                      >
-                        {language === "fr"
-                          ? VALUE_COPY[value.id]
-                              ?.description ??
-                            value.description
-                          : value.description}
-                      </p>
+                    <p
+                      className={`mt-3 text-sm leading-6 ${
+                        selected
+                          ? "text-white/60"
+                          : "text-black/50"
+                      }`}
+                    >
+                      {language === "fr"
+                        ? VALUE_COPY[value.id]
+                            ?.description ??
+                          value.description
+                        : value.description}
+                    </p>
 
-                      {selected && (
-                        <span className="mt-4 block text-[9px] font-semibold uppercase tracking-[0.18em] text-[#C9A876]">
-                          {t.selected}
-                        </span>
-                      )}
-                    </div>
+                    {selected && (
+                      <span className="mt-5 block border-t border-white/15 pt-3 text-[9px] font-semibold uppercase tracking-[0.18em] text-[#C9A876]">
+                        {t.selected}
+                      </span>
+                    )}
                   </button>
                 );
               })}
@@ -2192,7 +2173,7 @@ export default function AssessmentFlow() {
           </div>
         </div>
 
-        <div className="sticky top-0 z-40 -mx-5 mb-10 bg-[#F8F5F1]/95 px-5 py-4 backdrop-blur-md md:static md:mx-0 md:mb-14 md:bg-transparent md:px-0 md:py-0 md:backdrop-blur-none">
+        <div className="sticky top-0 z-40 -mx-5 mb-8 border-b border-black/10 bg-[#F8F5F1]/95 px-5 pb-4 pt-3 backdrop-blur-sm sm:static sm:mx-0 sm:mb-10 sm:border-0 sm:bg-transparent sm:px-0 sm:pb-0 sm:pt-0 md:mb-14">
           <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <div className="flex items-center gap-3">
@@ -2602,7 +2583,8 @@ function ArchetypeGroup({
               disabled={disabled || excluded}
               onClick={() => onSelect(archetype.id)}
               aria-pressed={selected}
-              className={`group relative min-h-[170px] border p-6 text-left transition-all duration-300 ${
+              aria-label={`${archetype.title}, ${variant === "primary" ? "primary" : "secondary"} archetype${selected ? ", selected" : ""}`}
+              className={`group relative min-h-[170px] border p-6 pb-7 text-left transition-all duration-300 ${
                 selected
                   ? "border-[#171519] bg-[#171519] text-white shadow-[0_14px_35px_rgba(23,21,25,0.08)]"
                   : disabled || excluded
@@ -2672,18 +2654,22 @@ function ArchetypeGroup({
                   : archetype.description}
               </p>
 
-              {excluded && (
-                <span className="absolute bottom-5 right-6 text-[9px] uppercase tracking-[0.15em] text-black/25">
-                  {t.primarySelected}
-                </span>
-              )}
+              {(excluded || selected) && (
+                <div className="mt-5 flex flex-wrap items-center justify-between gap-2 border-t border-current/15 pt-3">
+                  {excluded && (
+                    <span className="text-[9px] uppercase tracking-[0.15em] text-black/35">
+                      {t.primarySelected}
+                    </span>
+                  )}
 
-              {selected && (
-                <span className="absolute bottom-5 left-6 text-[9px] uppercase tracking-[0.15em] text-[#C9A876]">
-                  {variant === "primary"
-                    ? t.primary
-                    : t.secondary}
-                </span>
+                  {selected && (
+                    <span className="text-[9px] uppercase tracking-[0.15em] text-[#C9A876]">
+                      {variant === "primary"
+                        ? t.primary
+                        : t.secondary}
+                    </span>
+                  )}
+                </div>
               )}
             </button>
           );
