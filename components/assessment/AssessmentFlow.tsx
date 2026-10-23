@@ -1456,7 +1456,7 @@ export default function AssessmentFlow() {
                     onClick={() => toggleValue(value.id)}
                     disabled={disabled || isReviewMode}
                     aria-pressed={selected}
-                    className={`group relative min-h-[180px] border p-6 text-left transition-all duration-300 ${
+                    className={`group relative flex min-h-[200px] flex-col justify-between border p-6 text-left transition-all duration-300 ${
                       selected
                         ? "border-[#171519] bg-[#171519] text-white shadow-[0_12px_30px_rgba(23,21,25,0.08)]"
                         : disabled || isReviewMode
@@ -1491,32 +1491,34 @@ export default function AssessmentFlow() {
                       </span>
                     </div>
 
-                    <h3 className="mt-9 text-lg font-semibold tracking-tight">
-                      {language === "fr"
-                        ? VALUE_COPY[value.id]?.fr ??
-                          value.name
-                        : value.name}
-                    </h3>
+                    <div className="mt-8">
+                      <h3 className="text-lg font-semibold tracking-tight">
+                        {language === "fr"
+                          ? VALUE_COPY[value.id]?.fr ??
+                            value.name
+                          : value.name}
+                      </h3>
 
-                    <p
-                      className={`mt-3 text-sm leading-6 ${
-                        selected
-                          ? "text-white/60"
-                          : "text-black/50"
-                      }`}
-                    >
-                      {language === "fr"
-                        ? VALUE_COPY[value.id]
-                            ?.description ??
-                          value.description
-                        : value.description}
-                    </p>
+                      <p
+                        className={`mt-3 text-sm leading-6 ${
+                          selected
+                            ? "text-white/60"
+                            : "text-black/50"
+                        }`}
+                      >
+                        {language === "fr"
+                          ? VALUE_COPY[value.id]
+                              ?.description ??
+                            value.description
+                          : value.description}
+                      </p>
 
-                    {selected && (
-                      <span className="absolute bottom-5 left-6 text-[9px] font-semibold uppercase tracking-[0.18em] text-[#C9A876]">
-                        {t.selected}
-                      </span>
-                    )}
+                      {selected && (
+                        <span className="mt-4 block text-[9px] font-semibold uppercase tracking-[0.18em] text-[#C9A876]">
+                          {t.selected}
+                        </span>
+                      )}
+                    </div>
                   </button>
                 );
               })}
@@ -2190,7 +2192,7 @@ export default function AssessmentFlow() {
           </div>
         </div>
 
-        <div className="mb-10 md:mb-14">
+        <div className="sticky top-0 z-40 -mx-5 mb-10 bg-[#F8F5F1]/95 px-5 py-4 backdrop-blur-md md:static md:mx-0 md:mb-14 md:bg-transparent md:px-0 md:py-0 md:backdrop-blur-none">
           <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <div className="flex items-center gap-3">
