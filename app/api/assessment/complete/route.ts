@@ -21,7 +21,9 @@ export async function POST() {
     const assessment = await prisma.assessment.findFirst({
       where: {
         userId,
-        status: "IN_PROGRESS",
+        status: {
+          in: ["IN_PROGRESS", "COMPLETED"],
+        },
       },
       orderBy: {
         createdAt: "desc",
@@ -131,14 +133,18 @@ export async function POST() {
     });
 
     // Manual payment flow: create one pending payment record for this user.
-    const existingPendingPayment = await prisma.payment.findFirst({
+    // Reuse an existing pending/paid payment so repeated completion requests
+    // cannot create duplicate payment records or expose the premium report.
+    const existingActivePayment = await prisma.payment.findFirst({
       where: {
         userId,
-        status: "PENDING",
+        status: {
+          in: ["PENDING", "PAID"],
+        },
       },
     });
 
-    if (!existingPendingPayment) {
+    if (!existingActivePayment) {
       await prisma.payment.create({
         data: {
           userId,
@@ -152,7 +158,6 @@ export async function POST() {
     return NextResponse.json({
       success: true,
       resultId: result.id,
-      brandDNA,
     });
   } catch (error) {
     console.error("Assessment completion error:", error);
