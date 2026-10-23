@@ -1002,6 +1002,23 @@ export default async function Home() {
             </div>
           </Link>
 
+          <div className="flex flex-col gap-3 text-xs text-[#171519]/55 sm:flex-row sm:flex-wrap sm:items-center sm:gap-6">
+            <a
+              href="https://www.instagram.com/barandy.co/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-fit transition-colors hover:text-[#8F6D4D] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#8F6D4D]"
+            >
+              Instagram · @barandy.co
+            </a>
+            <a
+              href="tel:+21651786361"
+              className="w-fit transition-colors hover:text-[#8F6D4D] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#8F6D4D]"
+            >
+              +216 51 786 361
+            </a>
+          </div>
+
           <div className="flex flex-col gap-2 md:text-right">
             <span className="font-sans text-[8px] font-bold uppercase tracking-[0.18em] text-[#171519]/35">
               Brand Architecture
